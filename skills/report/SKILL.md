@@ -2,7 +2,7 @@
 name: report
 description: Generate a monthly stakeholder-facing report on community health and growth. Use when the CM needs to report up to a founder, owner, or board — quarterly reviews, sponsor updates, retention reviews.
 argument-hint: <path-to-export.txt> [--since YYYY-MM-DD] [--until YYYY-MM-DD]
-allowed-tools: Bash(vibra-report.js *)
+allowed-tools: Bash(vibra-report.js *) Bash(vibra-render-html.js *)
 ---
 
 No external API calls. Narrative synthesis happens inside this agent session.
@@ -64,4 +64,16 @@ _<since> → <until>_
 
 Use the owner's likely language — if the community is Spanish-led, the report is Spanish. If mixed, pick the one the owner speaks.
 
-Step 5 — report back: headline numbers + file path. Offer to open.
+Step 5 — render to polished HTML (for PDF export via browser Cmd+P):
+
+```bash
+vibra-render-html.js \
+  --input ./vibra-output/report-<slug>-<YYYY-MM-DD>.md \
+  --output ./vibra-output/report-<slug>-<YYYY-MM-DD>.html \
+  --title "<community> — Monthly Report" \
+  --eyebrow "Monthly Report" \
+  --community "<community>" \
+  --subtitle "<since> — <until>"
+```
+
+Step 6 — report back: headline numbers + BOTH file paths (.md for editing, .html for presenting / printing to PDF via Cmd+P). Mention the HTML has a "Powered by getvibra" page footer when printed.

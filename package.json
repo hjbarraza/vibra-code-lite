@@ -1,6 +1,6 @@
 {
   "name": "vibra-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "type": "module",
   "bin": {
@@ -12,7 +12,8 @@
     "vibra-content-ideas": "./bin/vibra-content-ideas.js",
     "vibra-profile": "./bin/vibra-profile.js",
     "vibra-report": "./bin/vibra-report.js",
-    "vibra-members": "./bin/vibra-members.js"
+    "vibra-members": "./bin/vibra-members.js",
+    "vibra-render-html": "./bin/vibra-render-html.js"
   },
   "scripts": {
     "test": "node --test \"tests/*.test.js\""

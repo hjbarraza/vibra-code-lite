@@ -2,7 +2,7 @@
 name: digest
 description: Generate a weekly digest from a WhatsApp chat export. Use when the user asks what happened in their community, wants a catch-up, or requests a weekly summary.
 argument-hint: <path-to-export.txt> [--since YYYY-MM-DD] [--until YYYY-MM-DD]
-allowed-tools: Bash(vibra-digest.js *)
+allowed-tools: Bash(vibra-digest.js *) Bash(vibra-render-html.js *)
 ---
 
 No external API calls — all LLM synthesis happens inside this agent session.
@@ -48,4 +48,16 @@ _Questions with no reply within 30 minutes. The deeper LLM-judged version lives 
 - <name>
 ```
 
-Step 5 — report back to the user: headline stats plus the digest path. Offer to open it.
+Step 5 — render to polished HTML:
+
+```bash
+vibra-render-html.js \
+  --input ./vibra-output/digest-<slug>-<YYYY-MM-DD>.md \
+  --output ./vibra-output/digest-<slug>-<YYYY-MM-DD>.html \
+  --title "<community> — Weekly Digest" \
+  --eyebrow "Weekly Digest" \
+  --community "<community>" \
+  --subtitle "<since> — <until>"
+```
+
+Step 6 — report back: headline stats + BOTH the .md and .html paths. Mention Cmd+P on the HTML prints to PDF cleanly with a "Powered by getvibra" footer.

@@ -14,6 +14,7 @@ export function parseArgs(argv, { extraFlags = {} } = {}) {
     else if (a.startsWith('--') && extraFlags[a.slice(2)]) out[a.slice(2)] = argv[++i];
     else if (!out.path) out.path = a;
   }
+  if (!out.path && process.env.VIBRA_EXPORT) out.path = process.env.VIBRA_EXPORT;
   return out;
 }
 

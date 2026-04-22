@@ -47,9 +47,13 @@ If you don't already have it, follow Anthropic's official guide: https://claude.
 
 You'll need a Claude account. Claude Code runs in your terminal.
 
-### 2. Install Node
+### 2. Check Node (you probably already have it)
 
-Vibra's scripts run on Node.js 20 or newer.
+Claude Code is itself an npm package, so if you installed Claude Code the standard way (`npm install -g @anthropic-ai/claude-code`), you already have Node.
+
+Check: `node --version`. If it prints `v20.x` or higher, skip the rest of this step.
+
+If Node is missing or older:
 
 **macOS:** `brew install node` (you need [Homebrew](https://brew.sh) first)
 
@@ -57,7 +61,7 @@ Vibra's scripts run on Node.js 20 or newer.
 
 **Linux:** `sudo apt install nodejs npm` or `nvm install 20`
 
-Check it worked: `node --version` should print `v20.something` or higher.
+> **Note:** Vibra requires **Claude Code** (the CLI tool that runs in your terminal). The **Claude Desktop** app for Mac/Windows is a different product and doesn't work with plugins. If you only have Claude Desktop, install Claude Code first: https://claude.com/claude-code
 
 ### 3. Install Vibra
 
@@ -217,6 +221,9 @@ Vibra's parser handles it. Processing is fast (seconds, not minutes). Artifacts 
 
 **Can I compare this week vs last week?**
 Yes — run any command twice with different `--since` / `--until` windows and compare the outputs. Or ask Claude: _"digest for last week vs the week before"_.
+
+**Do I have to retype the file path for every command?**
+Not really. Claude reads the conversation — once you've pointed it at an export, subsequent questions use the same one. For slash-command usage (`/vibra:digest` with no args), set `VIBRA_EXPORT=/path/to/_chat.txt` in your shell and every command picks it up automatically.
 
 **Where does the output go?**
 `./vibra-output/` by default. You can change the default during plugin setup, or pass `--output-dir ~/Documents/my-community-artifacts` per command.

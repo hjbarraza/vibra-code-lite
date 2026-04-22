@@ -2,7 +2,7 @@
 name: profile
 description: Produce a one-page dossier on a specific community member — what they care about, how they engage, who they connect with. Use before a 1-on-1 call, sponsor outreach, or to understand a specific member deeply.
 argument-hint: <path-to-export.txt> --member "<name>" [--since YYYY-MM-DD] [--until YYYY-MM-DD]
-allowed-tools: Bash(vibra-profile.js *)
+allowed-tools: Bash(vibra-profile.js *) Bash(vibra-render-html.js *) Bash(vibra-members.js *)
 ---
 
 No external API calls. The narrative synthesis happens inside this agent session.
@@ -60,4 +60,16 @@ _<community>, <since> → <until>_
 
 Use the community's dominant language for framing. Quotes stay in original language.
 
-Step 5 — report back: headline stats + file path. Offer to open.
+Step 5 — render to polished HTML:
+
+```bash
+vibra-render-html.js \
+  --input ./vibra-output/profile-<slug>-<member>.md \
+  --output ./vibra-output/profile-<slug>-<member>.html \
+  --title "<member> — Member Profile" \
+  --eyebrow "Member Profile" \
+  --community "<member>" \
+  --subtitle "<community>, <since> — <until>"
+```
+
+Step 6 — report back: headline stats + BOTH .md and .html paths. Offer to open either.

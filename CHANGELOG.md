@@ -4,6 +4,19 @@ All notable changes to Vibra are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.3] — 2026-04-22
+
+### Added
+
+- **Polished HTML + PDF for shareable artifacts.** `/vibra:report`, `/vibra:digest`, and `/vibra:profile` now render both `.md` (source/editable) and `.html` (Rams-styled, print-to-PDF) versions. The ops-facing skills (unanswered, action-list, content-ideas) stay markdown.
+- `bin/vibra-render-html.js` — standalone CLI that wraps any markdown file in the shared Rams shell. Used by the three shareable skills; also usable directly.
+- `src/renderers/base-html.js` — shared Rams shell + zero-dep markdown-to-HTML converter (headings, lists, bold/italic/code, links, blockquotes, tables, hr).
+- **`VIBRA_EXPORT` env var fallback** — set once, slash commands pick up the path automatically: `export VIBRA_EXPORT=~/Downloads/_chat.txt` then `/vibra:digest` works without args.
+
+### Changed
+
+- README clarifies that anyone with Claude Code already has Node (since Claude Code is itself an npm package). Also clarifies that **Claude Desktop** (the Mac/Windows app) is a different product from **Claude Code** (the CLI) and doesn't support plugins.
+
 ## [0.0.2] — 2026-04-22
 
 ### Changed
