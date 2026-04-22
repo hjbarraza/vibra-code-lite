@@ -72,7 +72,10 @@ test('pulse HTML renders both tabs with agent placeholders', () => {
   assert.ok(html.includes('Action queue'));
   assert.ok(html.includes('Open questions'));
   assert.ok(html.includes('Community vitals'));
-  assert.ok(html.includes('Member personas'));
+  assert.ok(html.includes('Members'));
+  assert.ok(html.includes('Member intelligence'));
+  assert.ok(html.includes('Network map'));
+  assert.ok(html.includes('Community health score'));
   assert.ok(html.includes('Topic signal'));
   assert.ok(html.includes('Jobs to be done'));
   assert.ok(html.includes('Strategic observations'));

@@ -1,8 +1,53 @@
 # Changelog
 
-All notable changes to Vibra are documented here.
+All notable changes to Vibra Code Lite are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [0.3.0] — 2026-04-22
+
+Major visualization + interactivity pass. Plugin renamed from `vibra` to `vibra-code-lite` to distinguish the open-source plugin from the company (Vibra) and the hosted product.
+
+### Renamed
+
+- **Plugin name**: `vibra` → `vibra-code-lite`. Slash commands are now `/vibra-code-lite:pulse`, `/vibra-code-lite:digest`, etc.
+- **GitHub repo**: `hjbarraza/vibra-plugin` → `hjbarraza/vibra-code-lite` (old URL redirects automatically).
+- **Install**: `/plugin marketplace add hjbarraza/vibra-code-lite` → `/plugin install vibra-code-lite@getvibra`. Marketplace name (`getvibra`) unchanged.
+- `plugin.json`, `marketplace.json`, `package.json`, README title, all skill prompts.
+
+### Added — visual upgrades
+
+- **Community Health Score** — radial-gauge 0-100 at the top of the Business tab. Composite: response rate 35% + roster activation 30% + distribution 20% + growth 15%. Labels: Thriving / Healthy / Needs attention / Critical.
+- **Force-directed network graph** — real nodes-and-edges visualization replacing the pair list. Node size = influence, color = tier, edge thickness = interaction count. Positions pre-computed in Node via a spring-embedder (`force-graph.js`).
+- **Per-member activity sparklines** — 42-day mini-chart in each Member Intelligence row.
+- **Activity stacked by tier** — stacked-area chart alongside the raw activity chart.
+- **Content mix bar** — horizontal bar + legend (questions / answers / shares / social / announcements / meta / other).
+- **Stickiness funnel** — Joined → Tried → Stuck → Ramped. Ghost list surfaces newcomers who never posted.
+
+### Added — interactivity
+
+- **Sortable Member Intelligence table** — click any column header to sort.
+- **Tier filter pills** — All / Champion / Power / Regular / at-risk / buy-curious.
+- **Member drill-down modal** — click any member name anywhere.
+- **Sticky sub-navigation** within Business tab.
+
+### Added — new analyzers
+
+- `src/analyzers/asks-offers.js` — identifies asks and offers, pairs them by topic-token overlap. Surfaces possible intros.
+- `src/analyzers/gratitude.js` — regex-based appreciation signals (EN/ES/PT/FR).
+- `src/analyzers/content-mix.js` — classifies every message.
+- `src/analyzers/stickiness.js` — 14-day newcomer retention funnel.
+- `src/analyzers/force-graph.js` — Fruchterman-Reingold spring-embedder for graph layout.
+
+### Added — new sections
+
+- CM tab: **Asks / offers / possible intros** panel.
+- Business tab: **Gratitude & satisfaction**, **New-member stickiness**, **Content mix**, benchmark callouts.
+
+### Changed
+
+- Pulse aggregator computes per-member daily activity + per-day activity-by-tier for visualizations.
+- Business tab reorganized with logical section order + sub-nav.
 
 ## [0.2.0] — 2026-04-22
 
@@ -27,7 +72,7 @@ Inspired by the hosted Vibra product at [getvibra.co](https://getvibra.co). Puls
 
 ### Added
 
-- **`/vibra:help`** — new skill that prints a quick reference: positioning, all commands, flags, quick-start, and contact info. Invoke when the user asks "what does this do?" or "how do I contact you?"
+- **`/vibra-code-lite:help`** — new skill that prints a quick reference: positioning, all commands, flags, quick-start, and contact info. Invoke when the user asks "what does this do?" or "how do I contact you?"
 
 ### Changed
 
@@ -41,7 +86,7 @@ Inspired by the hosted Vibra product at [getvibra.co](https://getvibra.co). Puls
 
 ### Changed
 
-- **`/vibra:pulse` is now the unified community dashboard**, replacing the old health-snapshot. One HTML artifact with two tabs:
+- **`/vibra-code-lite:pulse` is now the unified community dashboard**, replacing the old health-snapshot. One HTML artifact with two tabs:
   - **For the Community Manager** — action queue, open questions, top threads, content to amplify, membership flow. Fully deterministic; rendered from data.
   - **For the Business** — community vitals, growth vs prior period, activity charts, member personas, topic signal, jobs-to-be-done, strategic observations. Mix of deterministic (tables, metrics, token frequencies) + agent-synthesized (persona narratives, topic themes, JTBD, recommendations).
 - **Default window widened to 6 weeks** (42 days) — enough horizon for meaningful trend + persona + topic analysis.
@@ -61,8 +106,8 @@ Inspired by the hosted Vibra product at [getvibra.co](https://getvibra.co). Puls
 
 - **`marketplace.json`** — the repo now doubles as a Claude Code marketplace. Users can install via the `/plugin` interface instead of cloning:
   ```
-  /plugin marketplace add hjbarraza/vibra-plugin
-  /plugin install vibra@getvibra
+  /plugin marketplace add hjbarraza/vibra-code-lite
+  /plugin install vibra-code-lite@getvibra
   ```
   Updates pulled with `/plugin marketplace update getvibra`.
 
@@ -74,10 +119,10 @@ Inspired by the hosted Vibra product at [getvibra.co](https://getvibra.co). Puls
 
 ### Added
 
-- **Polished HTML + PDF for shareable artifacts.** `/vibra:report`, `/vibra:digest`, and `/vibra:profile` now render both `.md` (source/editable) and `.html` (Rams-styled, print-to-PDF) versions. The ops-facing skills (unanswered, action-list, content-ideas) stay markdown.
+- **Polished HTML + PDF for shareable artifacts.** `/vibra-code-lite:report`, `/vibra-code-lite:digest`, and `/vibra-code-lite:profile` now render both `.md` (source/editable) and `.html` (Rams-styled, print-to-PDF) versions. The ops-facing skills (unanswered, action-list, content-ideas) stay markdown.
 - `bin/vibra-render-html.js` — standalone CLI that wraps any markdown file in the shared Rams shell. Used by the three shareable skills; also usable directly.
 - `src/renderers/base-html.js` — shared Rams shell + zero-dep markdown-to-HTML converter (headings, lists, bold/italic/code, links, blockquotes, tables, hr).
-- **`VIBRA_EXPORT` env var fallback** — set once, slash commands pick up the path automatically: `export VIBRA_EXPORT=~/Downloads/_chat.txt` then `/vibra:digest` works without args.
+- **`VIBRA_EXPORT` env var fallback** — set once, slash commands pick up the path automatically: `export VIBRA_EXPORT=~/Downloads/_chat.txt` then `/vibra-code-lite:digest` works without args.
 
 ### Changed
 
@@ -102,7 +147,7 @@ First public release — the Normal tier.
 
 ### Added
 
-- **Skills** (9) — `/vibra:parse`, `/vibra:digest`, `/vibra:unanswered`, `/vibra:pulse`, `/vibra:action-list`, `/vibra:content-ideas`, `/vibra:profile`, `/vibra:report`, `/vibra:members`, plus the `analyze-whatsapp` orchestrator
+- **Skills** (9) — `/vibra-code-lite:parse`, `/vibra-code-lite:digest`, `/vibra-code-lite:unanswered`, `/vibra-code-lite:pulse`, `/vibra-code-lite:action-list`, `/vibra-code-lite:content-ideas`, `/vibra-code-lite:profile`, `/vibra-code-lite:report`, `/vibra-code-lite:members`, plus the `analyze-whatsapp` orchestrator
 - **Parser** — iOS bracket + Android dash formats, locale-agnostic date detection (bound-check + monotonicity fallback), multi-locale system-message patterns (EN/ES/PT/FR), U+200E stripping, tilde-prefix sender normalization
 - **Analyzers** — thread clustering, digest ranking, unanswered-question bundling with shared-context attribution, pulse stats (activity/heatmap/Gini/response rate), action-list heuristics (silent joiners, welcome gaps, frustration candidates, shoutout candidates), content mining (links + quotables + mentions), member profiles, monthly reports, member lists, and roster-vs-active ratio
 - **CLI flags** — `--since`, `--until`, `--output-dir`, `--lang` across every command

@@ -1,4 +1,5 @@
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const TIERS = ['Champion', 'Power', 'Regular', 'Occasional', 'One-time'];
 
 export function renderPulseHtml(p, { community }) {
   return `<!doctype html>
@@ -18,12 +19,14 @@ ${renderTabs()}
     ${renderCmTab(p)}
   </section>
   <section class="tab" id="tab-business">
+    ${renderBusinessNav()}
     ${renderBusinessTab(p)}
   </section>
 </main>
 ${renderFooter(community, p)}
 </div>
-<script>${TAB_JS}</script>
+${renderDrillDownModal()}
+<script>${JS}</script>
 </body>
 </html>`;
 }
@@ -45,11 +48,35 @@ function renderTabs() {
 </nav>`;
 }
 
+function renderBusinessNav() {
+  const items = [
+    ['health', 'Health'],
+    ['vitals', 'Vitals'],
+    ['growth', 'Growth'],
+    ['mix', 'Content mix'],
+    ['activity', 'Activity'],
+    ['members', 'Members'],
+    ['network', 'Network'],
+    ['stickiness', 'Stickiness'],
+    ['gratitude', 'Gratitude'],
+    ['buy', 'Revenue'],
+    ['topics', 'Topics'],
+    ['insights', 'Insights'],
+  ];
+  return `<nav class="subnav">${items.map(([id, label]) =>
+    `<a href="#sec-${id}" class="subnav-link">${label}</a>`).join('')}</nav>`;
+}
+
+// ============================================================================
+// CM TAB
+// ============================================================================
+
 function renderCmTab(p) {
   return `
 <div class="cm-grid">
   ${renderActionQueue(p)}
   ${renderAtRisk(p)}
+  ${renderAsksOffersIntros(p)}
   ${renderOpenQuestions(p)}
   ${renderTopThreads(p)}
   ${renderContentCards(p)}
@@ -58,46 +85,20 @@ function renderCmTab(p) {
 `;
 }
 
-function renderAtRisk(p) {
-  const atRisk = p.personas?.atRisk ?? [];
-  if (!atRisk.length) return `<div class="card"><h2>At-risk members</h2><p class="muted">No clear churn signals.</p></div>`;
-  const rows = atRisk.slice(0, 8).map(m => `
-    <tr>
-      <td><strong>${esc(m.name)}</strong> <span class="tier-pill tier-${m.tier.toLowerCase().replace(/[^a-z]/g, '')}">${esc(m.tier)}</span></td>
-      <td class="risk"><div class="risk-bar"><div class="risk-fill" style="width:${m.disengageRisk}%;background:${riskColor(m.disengageRisk)}"></div></div><span class="risk-num">${m.disengageRisk}</span></td>
-      <td class="muted">${m.daysSinceActive}d quiet · ${m.messages} msgs</td>
-    </tr>`).join('');
-  return `<div class="card wide">
-  <h2>At-risk members</h2>
-  <p class="card-hint">Composite disengage-risk score — posting-trend decline + days-since-last-post. Consider a check-in DM.</p>
-  <table class="risk-table"><tbody>${rows}</tbody></table>
-</div>`;
-}
-
 function renderActionQueue(p) {
   const a = p.actions;
   const rows = [];
-  for (const m of (a.frustrationCandidates ?? []).slice(0, 3)) {
-    rows.push({ kind: '🚨 Frustration', who: m.sender, when: m.sentAt?.slice(0, 10) ?? '', detail: (m.text ?? '').slice(0, 140) });
-  }
-  for (const m of (a.longSilentMembers ?? []).slice(0, 5)) {
-    rows.push({ kind: '👻 Long-silent', who: m.sender, when: `${m.silentDays}d silent`, detail: 'On roster, never posted' });
-  }
-  for (const m of (a.welcomeGaps ?? []).slice(0, 3)) {
-    rows.push({ kind: '🎯 Welcome gap', who: m.sender, when: m.joinedAt?.slice(0, 10) ?? '', detail: (m.firstMessage ?? '').slice(0, 140) });
-  }
-  for (const m of (a.silentJoiners ?? []).slice(0, 3)) {
-    rows.push({ kind: '👋 Silent joiner', who: m.sender, when: m.joinedAt?.slice(0, 10) ?? '', detail: 'Joined but never posted' });
-  }
-  for (const m of (a.shoutoutCandidates ?? []).slice(0, 3)) {
-    rows.push({ kind: '🙌 Shoutout', who: m.sender, when: `${m.helpCount} replies`, detail: m.sample ? (m.sample.reply ?? '').slice(0, 140) : '' });
-  }
+  for (const m of (a.frustrationCandidates ?? []).slice(0, 3)) rows.push({ kind: '🚨 Frustration', who: m.sender, when: m.sentAt?.slice(0, 10) ?? '', detail: (m.text ?? '').slice(0, 140) });
+  for (const m of (a.longSilentMembers ?? []).slice(0, 5)) rows.push({ kind: '👻 Long-silent', who: m.sender, when: `${m.silentDays}d silent`, detail: 'On roster, never posted' });
+  for (const m of (a.welcomeGaps ?? []).slice(0, 3)) rows.push({ kind: '🎯 Welcome gap', who: m.sender, when: m.joinedAt?.slice(0, 10) ?? '', detail: (m.firstMessage ?? '').slice(0, 140) });
+  for (const m of (a.silentJoiners ?? []).slice(0, 3)) rows.push({ kind: '👋 Silent joiner', who: m.sender, when: m.joinedAt?.slice(0, 10) ?? '', detail: 'Joined but never posted' });
+  for (const m of (a.shoutoutCandidates ?? []).slice(0, 3)) rows.push({ kind: '🙌 Shoutout', who: m.sender, when: `${m.helpCount} replies`, detail: m.sample ? (m.sample.reply ?? '').slice(0, 140) : '' });
 
   const body = rows.length
     ? `<table class="action-table"><tbody>${rows.map(r => `
       <tr>
         <td class="kind">${esc(r.kind)}</td>
-        <td class="who"><strong>${esc(r.who)}</strong></td>
+        <td class="who"><strong class="member-link" data-member="${esc(r.who)}">${esc(r.who)}</strong></td>
         <td class="when">${esc(r.when)}</td>
         <td class="detail">${esc(r.detail)}</td>
       </tr>`).join('')}</tbody></table>`
@@ -110,21 +111,57 @@ function renderActionQueue(p) {
 </div>`;
 }
 
+function renderAtRisk(p) {
+  const atRisk = p.personas?.atRisk ?? [];
+  if (!atRisk.length) return `<div class="card"><h2>At-risk members</h2><p class="muted">No clear churn signals.</p></div>`;
+  const rows = atRisk.slice(0, 8).map(m => `
+    <tr>
+      <td><strong class="member-link" data-member="${esc(m.name)}">${esc(m.name)}</strong> <span class="tier-pill tier-${tierClass(m.tier)}">${esc(m.tier)}</span></td>
+      <td class="risk"><div class="risk-bar"><div class="risk-fill" style="width:${m.disengageRisk}%;background:${riskColor(m.disengageRisk)}"></div></div><span class="risk-num">${m.disengageRisk}</span></td>
+      <td class="muted">${m.daysSinceActive}d quiet · ${m.messages} msgs</td>
+    </tr>`).join('');
+  return `<div class="card wide">
+  <h2>At-risk members</h2>
+  <p class="card-hint">Composite disengage-risk score — posting-trend decline + days-since-last-post. Consider a check-in DM.</p>
+  <table class="risk-table"><tbody>${rows}</tbody></table>
+</div>`;
+}
+
+function renderAsksOffersIntros(p) {
+  const intros = p.asksOffers?.possibleIntros ?? [];
+  const matches = p.asksOffers?.matches ?? [];
+  if (!matches.length && !intros.length) {
+    return `<div class="card"><h2>Asks & offers</h2><p class="muted">No ask/offer pairs detected.</p></div>`;
+  }
+  const introRows = intros.slice(0, 6).map(m => `
+    <tr>
+      <td><strong class="member-link" data-member="${esc(m.ask.sender)}">${esc(m.ask.sender)}</strong>
+        <span class="muted"> asked</span>: <em>${esc(m.ask.text.slice(0, 120))}</em></td>
+      <td><strong class="member-link" data-member="${esc(m.offer.sender)}">${esc(m.offer.sender)}</strong>
+        <span class="muted"> offered</span>: <em>${esc(m.offer.text.slice(0, 120))}</em></td>
+      <td><span class="confidence confidence-${m.confidence}">${m.confidence}</span></td>
+    </tr>`).join('');
+  const conf = matches.filter(m => m.inReplyWindow).length;
+  return `<div class="card wide">
+  <h2>Asks, offers, and possible intros</h2>
+  <p class="card-hint">${p.asksOffers.asksCount} asks and ${p.asksOffers.offersCount} offers detected. ${conf} pairs already connected in-thread. Below: candidates the CM might still introduce.</p>
+  ${introRows ? `<table class="intros"><thead><tr><th>Ask</th><th>Offer</th><th>Signal</th></tr></thead><tbody>${introRows}</tbody></table>` : '<p class="muted">No un-connected ask/offer pairs above low confidence this window.</p>'}
+</div>`;
+}
+
 function renderOpenQuestions(p) {
   const bundles = p.openQuestionBundles ?? [];
   const questions = bundles.flatMap(b => b.questions);
-  if (questions.length === 0) {
-    return `<div class="card"><h2>Open questions</h2><p class="muted">All questions addressed.</p></div>`;
-  }
+  if (questions.length === 0) return `<div class="card"><h2>Open questions</h2><p class="muted">All questions addressed.</p></div>`;
   const rows = questions.slice(0, 10).map(q => `
     <li>
-      <strong>${esc(q.sender)}</strong>
+      <strong class="member-link" data-member="${esc(q.sender)}">${esc(q.sender)}</strong>
       <span class="when">${esc((q.sentAt ?? '').slice(0, 10))}</span>
       <div class="q-text">${esc((q.text ?? '').slice(0, 240))}</div>
     </li>`).join('');
   return `<div class="card wide">
   <h2>Open questions</h2>
-  <p class="card-hint">Candidate asks that may need your follow-up. Full LLM-judged answered-ness via <code>/vibra:unanswered</code>.</p>
+  <p class="card-hint">Candidate asks that may need your follow-up. Full LLM-judged answered-ness via <code>/vibra-code-lite:unanswered</code>.</p>
   <ol class="open-q">${rows}</ol>
 </div>`;
 }
@@ -133,17 +170,17 @@ function renderTopThreads(p) {
   const threads = p.topThreads ?? [];
   if (threads.length === 0) return `<div class="card"><h2>Top threads</h2><p class="muted">No significant threads this window.</p></div>`;
   const rows = threads.slice(0, 5).map((t, i) => {
-    const who = (t.participants ?? []).slice(0, 3).join(', ') + ((t.participants?.length ?? 0) > 3 ? ' et al.' : '');
+    const who = (t.participants ?? []).slice(0, 3).map(n => `<span class="member-link" data-member="${esc(n)}">${esc(n)}</span>`).join(', ') + ((t.participants?.length ?? 0) > 3 ? ' et al.' : '');
     const snippet = t.messages?.[0]?.text?.slice(0, 140) ?? '';
     return `
     <li>
-      <div class="thread-head"><span class="rank">${i + 1}</span><strong>${esc(who)}</strong> <span class="when">${t.messageCount} msgs · ${t.participants?.length ?? 0} participants</span></div>
+      <div class="thread-head"><span class="rank">${i + 1}</span><span>${who}</span> <span class="when">${t.messageCount} msgs · ${t.participants?.length ?? 0} participants</span></div>
       <div class="thread-snippet">${esc(snippet)}</div>
     </li>`;
   }).join('');
   return `<div class="card wide">
   <h2>Top threads</h2>
-  <p class="card-hint">Highest-engagement threads this window. Full summaries via <code>/vibra:digest</code>.</p>
+  <p class="card-hint">Highest-engagement threads this window. Full summaries via <code>/vibra-code-lite:digest</code>.</p>
   <ol class="threads">${rows}</ol>
 </div>`;
 }
@@ -154,10 +191,10 @@ function renderContentCards(p) {
   const linkRows = links.slice(0, 5).map(l => {
     let host = l.url;
     try { host = new URL(l.url).hostname.replace(/^www\./, ''); } catch {}
-    return `<li><a href="${esc(l.url)}">${esc(host)}</a> <span class="when">${l.engagement ?? 0} replies</span><div class="muted">shared by ${esc(l.sharedBy)}</div></li>`;
+    return `<li><a href="${esc(l.url)}">${esc(host)}</a> <span class="when">${l.engagement ?? 0} replies</span><div class="muted">shared by <span class="member-link" data-member="${esc(l.sharedBy)}">${esc(l.sharedBy)}</span></div></li>`;
   }).join('');
   const quoteRows = quotes.slice(0, 3).map(q => `
-    <li><strong>${esc(q.sender)}</strong>: <span class="quote">"${esc((q.text ?? '').slice(0, 220))}"</span></li>
+    <li><strong class="member-link" data-member="${esc(q.sender)}">${esc(q.sender)}</strong>: <span class="quote">"${esc((q.text ?? '').slice(0, 220))}"</span></li>
   `).join('');
   return `<div class="card">
   <h2>Content to amplify</h2>
@@ -177,27 +214,33 @@ function renderQuietAndNew(p) {
   <div class="two-col">
     <div>
       <h3>New members</h3>
-      ${newM.length ? `<ul>${newM.map(m => `<li>${esc(m.canonical_name)} <span class="when">${esc((m.first_seen_at ?? '').slice(0, 10))}</span></li>`).join('')}</ul>` : '<p class="muted">None joined this window.</p>'}
+      ${newM.length ? `<ul>${newM.map(m => `<li><span class="member-link" data-member="${esc(m.canonical_name)}">${esc(m.canonical_name)}</span> <span class="when">${esc((m.first_seen_at ?? '').slice(0, 10))}</span></li>`).join('')}</ul>` : '<p class="muted">None joined this window.</p>'}
     </div>
     <div>
       <h3>Went quiet</h3>
-      ${quiet.length ? `<ul>${quiet.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : '<p class="muted">No members dropped off.</p>'}
+      ${quiet.length ? `<ul>${quiet.map(n => `<li><span class="member-link" data-member="${esc(n)}">${esc(n)}</span></li>`).join('')}</ul>` : '<p class="muted">No members dropped off.</p>'}
     </div>
   </div>
 </div>`;
 }
 
+// ============================================================================
+// BUSINESS TAB
+// ============================================================================
+
 function renderBusinessTab(p) {
   return `
 <div class="business-grid">
+  ${renderHealthScore(p)}
   ${renderVitals(p)}
   ${renderGrowth(p)}
-  ${renderTierDistribution(p)}
-  ${renderMemberIntel(p)}
-  ${renderNetworkMap(p)}
-  ${renderBuySignals(p)}
+  ${renderContentMix(p)}
   ${renderActivityCharts(p)}
-  ${renderPersonas(p)}
+  ${renderMembers(p)}
+  ${renderNetwork(p)}
+  ${renderStickiness(p)}
+  ${renderGratitude(p)}
+  ${renderBuySignals(p)}
   ${renderTopics(p)}
   ${renderJtbd(p)}
   ${renderRecommendations(p)}
@@ -205,139 +248,49 @@ function renderBusinessTab(p) {
 `;
 }
 
-function renderTierDistribution(p) {
-  const tiers = p.personas?.tierCounts ?? {};
-  const entries = [
-    ['Champion', tiers.Champion],
-    ['Power', tiers.Power],
-    ['Regular', tiers.Regular],
-    ['Occasional', tiers.Occasional],
-    ['One-time', tiers['One-time']],
-    ['Lurker', tiers.Lurker],
-  ];
-  const total = entries.reduce((s, [, n]) => s + (n || 0), 0);
-  if (total === 0) return '';
-  const rows = entries.map(([label, count]) => {
-    const pct = total > 0 ? (count / total) * 100 : 0;
-    return `<tr>
-      <td class="tier-label"><span class="tier-pill tier-${label.toLowerCase().replace(/[^a-z]/g, '')}">${label}</span></td>
-      <td class="count">${count}</td>
-      <td class="bar-cell"><div class="bar" style="width:${pct}%;background:${tierColor(label)}"></div></td>
-      <td class="pct">${pct.toFixed(0)}%</td>
-    </tr>`;
-  }).join('');
-  return `<div class="card wide">
-  <h2>Engagement tier distribution</h2>
-  <p class="card-hint">Champions (top 10% by messages) → Power (next 20%) → Regular (next 30%) → Occasional (3+ msgs) → One-time (1–2 msgs) → Lurker (roster, no posts).</p>
-  <table class="tier-dist"><tbody>${rows}</tbody></table>
-</div>`;
-}
-
-function renderMemberIntel(p) {
-  const members = [...(p.personas?.members ?? [])]
-    .sort((a, b) => b.messages - a.messages)
-    .slice(0, 25);
-  if (!members.length) return '';
-  const rows = members.map((m, i) => `
-    <tr>
-      <td class="rank">${i + 1}</td>
-      <td class="name"><strong>${esc(m.name)}</strong></td>
-      <td><span class="tier-pill tier-${m.tier.toLowerCase().replace(/[^a-z]/g, '')}">${esc(m.tier)}</span></td>
-      <td class="num">${m.messages}</td>
-      <td class="num">${m.attention}</td>
-      <td class="num">${m.influence}</td>
-      <td class="num">${Math.round(m.giverPct * 100)}%</td>
-      <td class="num">${m.buySignals > 0 ? m.buySignals : ''}</td>
-      <td class="num risk-cell"><span style="color:${riskColor(m.disengageRisk)}">${m.disengageRisk}</span></td>
-      <td class="muted">${m.daysSinceActive}d</td>
-    </tr>`).join('');
-  return `<div class="card wide">
-  <h2>Member intelligence</h2>
-  <p class="card-hint">Activity (msgs) · Attention (replies received) · Influence (network-weighted) · Giver % (replies given / msgs) · Buy (purchase-intent cues) · Risk (disengage score 0–100) · Last active (days).</p>
-  <div class="table-scroll">
-    <table class="member-intel">
-      <thead><tr>
-        <th></th><th>Member</th><th>Tier</th>
-        <th class="num">Activity</th><th class="num">Attention</th><th class="num">Influence</th>
-        <th class="num">Giver</th><th class="num">Buy</th><th class="num">Risk</th><th class="num">Last</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>
-</div>`;
-}
-
-function renderNetworkMap(p) {
-  const pairs = p.network?.topPairs ?? [];
-  const connectors = p.network?.topConnectors ?? [];
-  if (!pairs.length) return `<div class="card"><h2>Network map</h2><p class="muted">Not enough cross-member interactions to map.</p></div>`;
-  const pairRows = pairs.slice(0, 10).map(e => `
-    <tr>
-      <td class="pair"><strong>${esc(e.a)}</strong> ⟷ <strong>${esc(e.b)}</strong></td>
-      <td class="count">${e.count} interactions</td>
-    </tr>`).join('');
-  const nodeRows = connectors.slice(0, 10).map(n => `
-    <tr><td>${esc(n.name)}</td><td class="count">${n.degree}</td></tr>`).join('');
-  return `<div class="card wide">
-  <h2>Network map</h2>
-  <p class="card-hint">Who interacts with whom. Edges = message pairs within 30 minutes across distinct members (substantive replies only).</p>
-  <div class="two-col">
-    <div>
-      <h3>Top interaction pairs</h3>
-      <table class="mini"><tbody>${pairRows}</tbody></table>
-    </div>
-    <div>
-      <h3>Most connected members</h3>
-      <table class="mini"><tbody>${nodeRows}</tbody></table>
+function renderHealthScore(p) {
+  const h = p.healthScore;
+  if (!h) return '';
+  const pct = h.score;
+  const color = pct >= 75 ? 'oklch(55% 0.14 145)' : pct >= 60 ? 'oklch(60% 0.13 200)' : pct >= 45 ? 'oklch(65% 0.14 60)' : 'oklch(55% 0.16 30)';
+  const circumference = 2 * Math.PI * 70;
+  const offset = circumference * (1 - pct / 100);
+  const rows = Object.entries(h.components).map(([key, val]) => `
+    <tr><td>${componentLabel(key)}</td><td class="bar-cell"><div class="bar" style="width:${val}%;background:${color};opacity:0.6"></div></td><td class="num">${val}</td></tr>
+  `).join('');
+  return `<div class="card wide" id="sec-health">
+  <h2>Community health score</h2>
+  <p class="card-hint">Composite signal: response rate (35%) + roster activation (30%) + distribution (20%) + growth direction (15%).</p>
+  <div class="health-wrap">
+    <svg viewBox="0 0 180 180" class="health-gauge" width="180" height="180">
+      <circle cx="90" cy="90" r="70" fill="none" stroke="#f0f0f0" stroke-width="14"/>
+      <circle cx="90" cy="90" r="70" fill="none" stroke="${color}" stroke-width="14" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round" transform="rotate(-90 90 90)"/>
+      <text x="90" y="88" text-anchor="middle" font-size="34" font-weight="400" fill="#1a1a1a" font-variant-numeric="tabular-nums">${pct}</text>
+      <text x="90" y="110" text-anchor="middle" font-size="11" fill="#6b6b6b" letter-spacing="0.12em">${h.label.toUpperCase()}</text>
+    </svg>
+    <div class="health-components">
+      <table><tbody>${rows}</tbody></table>
     </div>
   </div>
 </div>`;
 }
 
-function renderBuySignals(p) {
-  const buyCurious = p.personas?.buyCurious ?? [];
-  if (!buyCurious.length) return '';
-  const rows = buyCurious.slice(0, 8).map(m => `
-    <tr>
-      <td><strong>${esc(m.name)}</strong></td>
-      <td class="count">${m.buySignals} msg${m.buySignals === 1 ? '' : 's'}</td>
-      <td class="muted">Mentions pricing, packages, or purchase intent</td>
-    </tr>`).join('');
-  return `<div class="card wide">
-  <h2>Revenue / buy signals</h2>
-  <p class="card-hint">Members whose messages contained purchase-intent cues (pricing, subscriptions, "worth it", "I'd pay…"). Heuristic — the agent can judge specific cases in the JTBD section.</p>
-  <table class="mini"><tbody>${rows}</tbody></table>
-</div>`;
-}
-
-function tierColor(tier) {
-  return {
-    Champion: 'oklch(55% 0.14 145)',
-    Power: 'oklch(55% 0.13 250)',
-    Regular: 'oklch(70% 0.08 250)',
-    Occasional: 'oklch(80% 0.04 250)',
-    'One-time': 'oklch(85% 0.02 250)',
-    Lurker: 'oklch(90% 0.01 250)',
-  }[tier] ?? 'oklch(70% 0.04 250)';
-}
-
-function riskColor(score) {
-  if (score >= 70) return 'oklch(55% 0.16 30)';
-  if (score >= 40) return 'oklch(65% 0.14 60)';
-  return 'oklch(70% 0.12 145)';
+function componentLabel(k) {
+  return { responseRate: 'Response rate', activation: 'Roster activation', distribution: 'Distribution (low Gini)', growth: 'Growth direction' }[k] ?? k;
 }
 
 function renderVitals(p) {
   const fmtPct = n => n == null ? '—' : `${Math.round(n * 100)}%`;
   const rosterPct = p.roster.rosterSize > 0 ? Math.round((p.roster.activeInWindow / p.roster.rosterSize) * 100) : 0;
-  const giniLabel = p.gini < 0.3 ? 'Healthy distribution' : p.gini < 0.5 ? 'Moderately concentrated' : p.gini < 0.7 ? 'Highly concentrated' : 'Very concentrated';
-  return `<div class="card wide">
+  const giniLabel = p.gini < 0.3 ? 'Healthy' : p.gini < 0.5 ? 'Moderate' : p.gini < 0.7 ? 'High' : 'Very high';
+  const benchResponse = p.responseRate.rate != null && p.responseRate.rate > 0.7 ? 'strong' : p.responseRate.rate > 0.5 ? 'typical' : 'low';
+  return `<div class="card wide" id="sec-vitals">
   <h2>Community vitals</h2>
   <div class="metrics">
     <div class="metric"><div class="value">${p.totalMessages.toLocaleString()}</div><div class="label">Messages</div><div class="sub">${p.threadStats.count} threads</div></div>
     <div class="metric"><div class="value">${p.roster.activeInWindow}<span class="dim">/${p.roster.rosterSize}</span></div><div class="label">Active of roster</div><div class="sub">${rosterPct}% posted · ${p.roster.neverPosted} never posted${p.roster.rosterIsLowerBound ? ' (lower bound)' : ''}</div></div>
-    <div class="metric"><div class="value">${fmtPct(p.responseRate.rate)}</div><div class="label">Response rate</div><div class="sub">${p.responseRate.answered}/${p.responseRate.questions} &lt;30 min</div></div>
-    <div class="metric"><div class="value">${p.gini.toFixed(2)}</div><div class="label">Gini</div><div class="sub">${giniLabel}</div></div>
+    <div class="metric"><div class="value">${fmtPct(p.responseRate.rate)}</div><div class="label">Response rate</div><div class="sub bench">${benchResponse} · paid communities typical: 50-70%</div></div>
+    <div class="metric"><div class="value">${p.gini.toFixed(2)}</div><div class="label">Concentration (Gini)</div><div class="sub">${giniLabel}</div></div>
   </div>
 </div>`;
 }
@@ -346,10 +299,10 @@ function renderGrowth(p) {
   const prev = p.growth?.previousPeriod;
   if (!prev) return '';
   const delta = (cur, pre) => pre === 0 ? '—' : `${cur > pre ? '+' : ''}${(((cur - pre) / pre) * 100).toFixed(0)}%`;
-  return `<div class="card wide">
+  return `<div class="card" id="sec-growth">
   <h2>Growth vs prior ${p.windowDays} days</h2>
   <table class="kv">
-    <tr><th>Metric</th><th>Prior period</th><th>This period</th><th>Δ</th></tr>
+    <tr><th>Metric</th><th>Prior</th><th>Now</th><th>Δ</th></tr>
     <tr><td>Messages</td><td>${prev.totalMessages}</td><td>${p.totalMessages}</td><td>${delta(p.totalMessages, prev.totalMessages)}</td></tr>
     <tr><td>Active members</td><td>${prev.distinctMembers}</td><td>${p.distinctMembers}</td><td>${delta(p.distinctMembers, prev.distinctMembers)}</td></tr>
     <tr><td>Roster (visible)</td><td>${prev.rosterSize}</td><td>${p.roster.rosterSize}</td><td>${delta(p.roster.rosterSize, prev.rosterSize)}</td></tr>
@@ -357,11 +310,44 @@ function renderGrowth(p) {
 </div>`;
 }
 
+function renderContentMix(p) {
+  const mix = p.contentMix;
+  if (!mix || !mix.total) return '';
+  const order = ['question', 'answer', 'share', 'social', 'announcement', 'meta', 'other'];
+  const colors = { question: 'oklch(55% 0.13 250)', answer: 'oklch(55% 0.14 145)', share: 'oklch(65% 0.13 290)', social: 'oklch(70% 0.1 60)', announcement: 'oklch(60% 0.14 30)', meta: 'oklch(60% 0.05 250)', other: 'oklch(80% 0.02 250)' };
+  let x = 0;
+  const bar = order.map(k => {
+    const pct = mix.percentages[k] ?? 0;
+    if (pct === 0) return '';
+    const seg = `<rect x="${x}%" y="0" width="${pct}%" height="100%" fill="${colors[k]}"><title>${k}: ${mix.categories[k]} msgs (${pct}%)</title></rect>`;
+    x += pct;
+    return seg;
+  }).join('');
+  const rows = order.map(k => `
+    <tr>
+      <td><span class="dot" style="background:${colors[k]}"></span>${labelFor(k)}</td>
+      <td class="num">${mix.categories[k]}</td>
+      <td class="num">${mix.percentages[k]}%</td>
+    </tr>`).join('');
+  return `<div class="card wide" id="sec-mix">
+  <h2>Content mix</h2>
+  <p class="card-hint">What members actually post. Balanced communities have &gt;30% answers, healthy 15-25% social, &lt;5% meta.</p>
+  <svg viewBox="0 0 100 8" preserveAspectRatio="none" class="mix-bar">${bar}</svg>
+  <table class="mini"><tbody>${rows}</tbody></table>
+</div>`;
+}
+
+function labelFor(k) {
+  return { question: 'Questions', answer: 'Answers', share: 'Shares / media', social: 'Social / chitchat', announcement: 'Announcements', meta: 'Meta', other: 'Other' }[k] ?? k;
+}
+
 function renderActivityCharts(p) {
   const dayMax = Math.max(1, ...p.messagesByDay.map(d => d.count));
-  return `<div class="card wide">
+  return `<div class="card wide" id="sec-activity">
   <h2>Activity over time</h2>
   <div class="chart">${renderActivitySvg(p.messagesByDay, dayMax)}</div>
+  <h3>Stacked by tier</h3>
+  <div class="chart">${renderStackedAreaSvg(p.activityByTier)}</div>
   <h3>Day × hour heatmap</h3>
   <div class="chart">${renderHeatmapSvg(p.messagesByHourOfWeek)}</div>
   <h3>Top contributors</h3>
@@ -374,35 +360,187 @@ function renderContributorsTable(contributors) {
   const max = contributors[0].count;
   const rows = contributors.slice(0, 10).map((c, i) => {
     const pct = (c.count / max) * 100;
-    return `<tr><td class="rank">${i + 1}</td><td>${esc(c.name)}</td><td class="count">${c.count}</td><td class="bar-cell"><div class="bar" style="width:${pct}%"></div></td></tr>`;
+    return `<tr><td class="rank">${i + 1}</td><td><span class="member-link" data-member="${esc(c.name)}">${esc(c.name)}</span></td><td class="count">${c.count}</td><td class="bar-cell"><div class="bar" style="width:${pct}%"></div></td></tr>`;
   }).join('');
   return `<table class="contributors"><tbody>${rows}</tbody></table>`;
 }
 
-function renderPersonas(p) {
-  const c = p.personas?.clusters ?? {};
-  const clusterOrder = ['helper', 'asker', 'connector', 'content-sharer', 'regular', 'newcomer', 'observer'];
-  const rows = clusterOrder.map(key => {
-    const members = c[key] ?? [];
-    if (!members.length && key !== 'lurker_count') return '';
-    return `<tr>
-      <td class="persona-label">${esc(labelFor(key))}</td>
-      <td class="persona-count">${members.length}</td>
-      <td class="persona-top">${members.slice(0, 5).map(m => esc(m.name)).join(', ')}</td>
-    </tr>`;
-  }).filter(Boolean).join('');
-  const lurkerRow = c.lurker_count > 0
-    ? `<tr><td class="persona-label">Lurkers (no posts)</td><td class="persona-count">${c.lurker_count}</td><td class="persona-top muted">On roster, never contributed</td></tr>`
-    : '';
+function renderMembers(p) {
+  return `<div class="card wide" id="sec-members">
+  <h2>Members</h2>
+  <p class="card-hint">Engagement tiers + per-member intelligence. Sortable, filterable. Click any name for a mini-profile.</p>
+  ${renderTierDistribution(p)}
+  ${renderMemberIntel(p)}
+</div>`;
+}
 
-  return `<div class="card wide">
-  <h2>Member personas</h2>
-  <p class="card-hint">Heuristic clustering by behavior. Quantitative — descriptive labels and narrative below are agent-synthesized.</p>
-  <table class="personas"><thead><tr><th>Persona</th><th>Count</th><th>Top members</th></tr></thead><tbody>${rows}${lurkerRow}</tbody></table>
-  <div class="agent-fill" data-fill="persona-narrative">
-    <h3>Persona narrative</h3>
-    <p class="muted">This section fills in when rendered via Claude Code — the agent reads the clustering above and writes a short narrative per cluster (who they are, what they need, how they engage). If this text is still here, run <code>/vibra:pulse &lt;path&gt;</code> inside Claude Code.</p>
+function renderTierDistribution(p) {
+  const tiers = p.personas?.tierCounts ?? {};
+  const entries = [['Champion', tiers.Champion], ['Power', tiers.Power], ['Regular', tiers.Regular], ['Occasional', tiers.Occasional], ['One-time', tiers['One-time']], ['Lurker', tiers.Lurker]];
+  const total = entries.reduce((s, [, n]) => s + (n || 0), 0);
+  if (total === 0) return '';
+  const rows = entries.map(([label, count]) => {
+    const pct = total > 0 ? (count / total) * 100 : 0;
+    return `<tr>
+      <td class="tier-label"><span class="tier-pill tier-${tierClass(label)}">${label}</span></td>
+      <td class="count">${count}</td>
+      <td class="bar-cell"><div class="bar" style="width:${pct}%;background:${tierColor(label)}"></div></td>
+      <td class="pct">${pct.toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+  return `<h3>Engagement tier distribution</h3>
+  <table class="tier-dist"><tbody>${rows}</tbody></table>`;
+}
+
+function renderMemberIntel(p) {
+  const members = [...(p.personas?.members ?? [])].sort((a, b) => b.messages - a.messages).slice(0, 25);
+  if (!members.length) return '';
+  const daily = p.memberDaily?.perMember ?? {};
+  const filters = ['All', 'Champion', 'Power', 'Regular', 'at-risk', 'buy-curious'];
+  const pills = filters.map((f, i) => `<button type="button" class="filter-pill${i === 0 ? ' active' : ''}" data-filter="${esc(f)}">${esc(f)}</button>`).join('');
+  const rows = members.map((m, i) => {
+    const sp = renderSparkline(daily[m.name] ?? []);
+    const tierCls = tierClass(m.tier);
+    const filterTags = [m.tier, ...(m.tags || [])].join(' ');
+    return `<tr class="member-row" data-filter="${esc(filterTags)}" data-member="${esc(m.name)}"
+        data-activity="${m.messages}" data-attention="${m.attention}" data-influence="${m.influence}"
+        data-giver="${m.giverPct}" data-buy="${m.buySignals}" data-risk="${m.disengageRisk}" data-last="${m.daysSinceActive}">
+      <td class="rank">${i + 1}</td>
+      <td class="name"><strong class="member-link" data-member="${esc(m.name)}">${esc(m.name)}</strong></td>
+      <td><span class="tier-pill tier-${tierCls}">${esc(m.tier)}</span></td>
+      <td class="spark">${sp}</td>
+      <td class="num">${m.messages}</td>
+      <td class="num">${m.attention}</td>
+      <td class="num">${m.influence}</td>
+      <td class="num">${Math.round(m.giverPct * 100)}%</td>
+      <td class="num">${m.buySignals > 0 ? m.buySignals : ''}</td>
+      <td class="num risk-cell"><span style="color:${riskColor(m.disengageRisk)}">${m.disengageRisk}</span></td>
+      <td class="muted">${m.daysSinceActive}d</td>
+    </tr>`;
+  }).join('');
+  return `<h3>Member intelligence</h3>
+  <p class="card-hint">Activity (msgs) · Sparkline (per-day) · Attention (replies received) · Influence (network reach) · Giver % · Buy cues · Risk (0–100) · Last active.</p>
+  <div class="filter-bar">${pills}</div>
+  <div class="table-scroll">
+    <table class="member-intel" id="member-intel">
+      <thead><tr>
+        <th></th><th>Member</th><th>Tier</th><th>Trend</th>
+        <th class="num sortable" data-sort="activity">Activity</th>
+        <th class="num sortable" data-sort="attention">Attention</th>
+        <th class="num sortable" data-sort="influence">Influence</th>
+        <th class="num sortable" data-sort="giver">Giver</th>
+        <th class="num sortable" data-sort="buy">Buy</th>
+        <th class="num sortable" data-sort="risk">Risk</th>
+        <th class="num sortable" data-sort="last">Last</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderNetwork(p) {
+  const positions = p.network?.forcePositions ?? [];
+  const nodes = p.network?.forceNodes ?? [];
+  const edges = p.network?.forceEdges ?? [];
+  if (!positions.length) return `<div class="card" id="sec-network"><h2>Network map</h2><p class="muted">Not enough cross-member interactions.</p></div>`;
+
+  const posMap = new Map(positions.map(p => [p.id, p]));
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const maxInfluence = Math.max(1, ...nodes.map(n => n.influence));
+  const maxWeight = Math.max(1, ...edges.map(e => e.weight));
+
+  const edgeSvg = edges.map(e => {
+    const a = posMap.get(e.source); const b = posMap.get(e.target);
+    if (!a || !b) return '';
+    const w = 0.5 + (e.weight / maxWeight) * 2.8;
+    const opacity = 0.15 + (e.weight / maxWeight) * 0.6;
+    return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="#1a1a1a" stroke-width="${w.toFixed(2)}" stroke-opacity="${opacity.toFixed(2)}"/>`;
+  }).join('');
+
+  const nodeSvg = positions.map(pos => {
+    const n = nodeMap.get(pos.id);
+    if (!n) return '';
+    const r = 4 + (n.influence / maxInfluence) * 18;
+    const color = tierColor(n.tier);
+    return `<g class="node" data-member="${esc(n.id)}">
+      <circle cx="${pos.x.toFixed(1)}" cy="${pos.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${color}" stroke="#fff" stroke-width="1.5"><title>${esc(n.id)} · ${n.tier} · ${n.messages} msgs · inf ${n.influence}</title></circle>
+      <text x="${pos.x.toFixed(1)}" y="${(pos.y + r + 10).toFixed(1)}" text-anchor="middle" font-size="9" fill="#1a1a1a">${esc(shortName(n.id))}</text>
+    </g>`;
+  }).join('');
+
+  const pairs = p.network.topPairs.slice(0, 8).map(e => `<li><strong class="member-link" data-member="${esc(e.a)}">${esc(e.a)}</strong> ⟷ <strong class="member-link" data-member="${esc(e.b)}">${esc(e.b)}</strong> <span class="when">${e.count}x</span></li>`).join('');
+
+  return `<div class="card wide" id="sec-network">
+  <h2>Network map</h2>
+  <p class="card-hint">Node size = influence. Color = engagement tier. Edge thickness = interaction count. Hover a circle for details.</p>
+  <div class="network-wrap">
+    <svg viewBox="0 0 900 520" class="network-svg">${edgeSvg}${nodeSvg}</svg>
   </div>
+  <h3>Top interaction pairs</h3>
+  <ul class="pair-list">${pairs}</ul>
+</div>`;
+}
+
+function shortName(s) {
+  const first = s.split(' ')[0];
+  return first.length > 14 ? first.slice(0, 13) + '…' : first;
+}
+
+function renderStickiness(p) {
+  const s = p.stickiness;
+  if (!s || s.funnel.total === 0) return `<div class="card" id="sec-stickiness"><h2>New-member stickiness</h2><p class="muted">No newcomers this window.</p></div>`;
+  const f = s.funnel;
+  const stages = [
+    ['Joined', f.total, 'oklch(55% 0.13 250)'],
+    ['Tried (1-2 msgs)', f.tried, 'oklch(60% 0.13 250)'],
+    ['Stuck (3-7 msgs)', f.stuck, 'oklch(55% 0.14 145)'],
+    ['Ramped (8+ msgs)', f.ramped, 'oklch(50% 0.16 145)'],
+  ];
+  const rows = stages.map(([label, n, color]) => {
+    const pct = f.total > 0 ? (n / f.total) * 100 : 0;
+    return `<tr>
+      <td class="stage-label">${label}</td>
+      <td class="count">${n}</td>
+      <td class="bar-cell"><div class="bar" style="width:${pct}%;background:${color}"></div></td>
+      <td class="pct">${pct.toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+  const ghostRows = s.ghosts.slice(0, 8).map(g => `<li><strong class="member-link" data-member="${esc(g.name)}">${esc(g.name)}</strong> <span class="when">joined ${g.joinedAt.slice(0, 10)}</span></li>`).join('');
+  return `<div class="card wide" id="sec-stickiness">
+  <h2>New-member stickiness</h2>
+  <p class="card-hint">Newcomers' trajectory in their first 14 days. Key retention KPI — ghost rate above 40% is a welcome-flow problem.</p>
+  <table class="tier-dist"><tbody>${rows}</tbody></table>
+  ${ghostRows ? `<h3>Ghosts (joined, never posted)</h3><ul>${ghostRows}</ul>` : ''}
+</div>`;
+}
+
+function renderGratitude(p) {
+  const g = p.gratitude;
+  if (!g || g.totalCount === 0) return `<div class="card" id="sec-gratitude"><h2>Gratitude & satisfaction</h2><p class="muted">No gratitude signals detected.</p></div>`;
+  const receivers = g.topReceivers.slice(0, 6).map(r => `<li><strong class="member-link" data-member="${esc(r.name)}">${esc(r.name)}</strong> <span class="when">${r.count}x thanked</span></li>`).join('');
+  const samples = g.samples.slice(0, 3).map(s => `<li><strong class="member-link" data-member="${esc(s.sender)}">${esc(s.sender)}</strong>: <em>${esc((s.text ?? '').slice(0, 180))}</em></li>`).join('');
+  return `<div class="card" id="sec-gratitude">
+  <h2>Gratitude & satisfaction</h2>
+  <p class="card-hint">${g.totalCount} messages expressing thanks/appreciation. Signal of what the community values.</p>
+  <h3>Most-thanked members</h3>
+  <ul>${receivers}</ul>
+  ${samples ? `<h3>Sample moments</h3><ul class="samples">${samples}</ul>` : ''}
+</div>`;
+}
+
+function renderBuySignals(p) {
+  const buyCurious = p.personas?.buyCurious ?? [];
+  if (!buyCurious.length) return `<div class="card" id="sec-buy"><h2>Revenue / buy signals</h2><p class="muted">No purchase-intent cues this window.</p></div>`;
+  const rows = buyCurious.slice(0, 8).map(m => `
+    <tr>
+      <td><strong class="member-link" data-member="${esc(m.name)}">${esc(m.name)}</strong></td>
+      <td class="count">${m.buySignals} msg${m.buySignals === 1 ? '' : 's'}</td>
+      <td class="muted">Mentions pricing, subscriptions, or purchase intent</td>
+    </tr>`).join('');
+  return `<div class="card wide" id="sec-buy">
+  <h2>Revenue / buy signals</h2>
+  <p class="card-hint">Members whose messages contained purchase-intent cues (pricing, "worth it", "I'd pay…"). Target for premium-tier research.</p>
+  <table class="mini"><tbody>${rows}</tbody></table>
 </div>`;
 }
 
@@ -411,44 +549,49 @@ function renderTopics(p) {
   const body = tokens.length
     ? `<ul class="topic-list">${tokens.slice(0, 12).map(t => `<li><strong>${esc(t.token)}</strong> <span class="when">${t.count} messages · ${t.distinctMembers} members</span></li>`).join('')}</ul>`
     : '<p class="muted">Not enough signal to surface topics.</p>';
-  return `<div class="card wide">
+  return `<div class="card wide" id="sec-topics">
   <h2>Topic signal</h2>
-  <p class="card-hint">Keyword-frequency tokens that appear across multiple members. Semantic clustering + labels come from the agent.</p>
+  <p class="card-hint">Keyword-frequency tokens across multiple members. Semantic clustering + labels come from the agent.</p>
   ${body}
   <div class="agent-fill" data-fill="topic-themes">
     <h3>Topic themes</h3>
-    <p class="muted">Agent-synthesized theme labels and what they reveal about the community's focus. If this text is still here, run <code>/vibra:pulse &lt;path&gt;</code> inside Claude Code.</p>
+    <p class="muted">Agent-synthesized theme labels. Run <code>/vibra-code-lite:pulse &lt;path&gt;</code> inside Claude Code to populate.</p>
   </div>
 </div>`;
 }
 
 function renderJtbd(p) {
-  return `<div class="card wide agent-fill" data-fill="jtbd">
+  return `<div class="card wide agent-fill" data-fill="jtbd" id="sec-insights">
   <h2>Jobs to be done</h2>
-  <p class="card-hint">What members are actually trying to accomplish — functional, emotional, social. Derived from asks, frustrations, and topic signal.</p>
-  <p class="muted">Agent-synthesized. Run <code>/vibra:pulse &lt;path&gt;</code> inside Claude Code to populate this section with JTBD analysis grounded in the data above.</p>
+  <p class="card-hint">What members are trying to accomplish. Synthesized by the agent from asks, frustrations, topic signal.</p>
+  <p class="muted">Agent-synthesized. Run <code>/vibra-code-lite:pulse &lt;path&gt;</code> inside Claude Code to populate.</p>
 </div>`;
 }
 
 function renderRecommendations(p) {
   return `<div class="card wide agent-fill" data-fill="recommendations">
   <h2>Strategic observations</h2>
-  <p class="card-hint">Concrete moves the business should consider, grounded in the data.</p>
-  <p class="muted">Agent-synthesized. Run <code>/vibra:pulse &lt;path&gt;</code> inside Claude Code to populate this section with 3–5 strategic recommendations based on growth, vitals, personas, topics, and risk signals.</p>
+  <p class="card-hint">Concrete moves grounded in the data.</p>
+  <p class="muted">Agent-synthesized. Run <code>/vibra-code-lite:pulse &lt;path&gt;</code> inside Claude Code to populate.</p>
 </div>`;
 }
 
-function labelFor(key) {
-  return {
-    helper: 'Helpers',
-    asker: 'Askers',
-    connector: 'Connectors',
-    'content-sharer': 'Content sharers',
-    regular: 'Regulars',
-    newcomer: 'Newcomers',
-    observer: 'Observers',
-  }[key] ?? key;
+// ============================================================================
+// PERSONAS LEGACY (kept accessible via agent-fill)
+// ============================================================================
+
+// Persona narrative lives inside the Members section per v0.3; the agent-fill
+// placeholder is still rendered so the skill synthesis can land somewhere.
+function renderPersonaNarrativePlaceholder() {
+  return `<div class="agent-fill" data-fill="persona-narrative">
+    <h3>Persona narrative</h3>
+    <p class="muted">Agent-synthesized cluster narrative. Run <code>/vibra-code-lite:pulse &lt;path&gt;</code> inside Claude Code to populate.</p>
+  </div>`;
 }
+
+// ============================================================================
+// CHART HELPERS
+// ============================================================================
 
 function renderActivitySvg(days, max) {
   const W = 1000, H = 180, PAD_L = 32, PAD_R = 8, PAD_T = 12, PAD_B = 28;
@@ -456,12 +599,11 @@ function renderActivitySvg(days, max) {
   const innerH = H - PAD_T - PAD_B;
   const bw = innerW / Math.max(1, days.length);
   const yTicks = 4;
-  let gridLines = '';
+  let grid = '';
   for (let i = 0; i <= yTicks; i++) {
     const y = PAD_T + (innerH * i) / yTicks;
     const v = Math.round((max * (yTicks - i)) / yTicks);
-    gridLines += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#e5e5e5" stroke-width="1"/>`;
-    gridLines += `<text x="${PAD_L - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#9a9a9a">${v}</text>`;
+    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#e5e5e5" stroke-width="1"/><text x="${PAD_L - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#9a9a9a">${v}</text>`;
   }
   const bars = days.map((d, i) => {
     const h = (d.count / max) * innerH;
@@ -471,7 +613,47 @@ function renderActivitySvg(days, max) {
   }).join('');
   const labelEvery = Math.max(1, Math.ceil(days.length / 10));
   const labels = days.map((d, i) => i % labelEvery !== 0 ? '' : `<text x="${PAD_L + i * bw + bw / 2}" y="${H - 8}" fill="#9a9a9a" font-size="10" text-anchor="middle">${d.date.slice(5)}</text>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${gridLines}${bars}${labels}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${grid}${bars}${labels}</svg>`;
+}
+
+function renderStackedAreaSvg(activityByTier) {
+  if (!activityByTier || !activityByTier.days.length) return '';
+  const W = 1000, H = 180, PAD_L = 32, PAD_R = 120, PAD_T = 12, PAD_B = 28;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+  const days = activityByTier.days;
+  const n = days.length;
+  const stacked = days.map((_, i) => {
+    let cum = 0;
+    const col = {};
+    for (const tier of TIERS) {
+      const v = activityByTier.series[tier]?.[i] ?? 0;
+      col[tier] = { start: cum, end: cum + v };
+      cum += v;
+    }
+    col.total = cum;
+    return col;
+  });
+  const max = Math.max(1, ...stacked.map(c => c.total));
+  const xAt = i => PAD_L + (i / Math.max(1, n - 1)) * innerW;
+  const yAt = v => PAD_T + innerH - (v / max) * innerH;
+  const areas = TIERS.map(tier => {
+    const pts = [];
+    for (let i = 0; i < n; i++) pts.push(`${xAt(i).toFixed(1)},${yAt(stacked[i][tier].end).toFixed(1)}`);
+    for (let i = n - 1; i >= 0; i--) pts.push(`${xAt(i).toFixed(1)},${yAt(stacked[i][tier].start).toFixed(1)}`);
+    return `<polygon points="${pts.join(' ')}" fill="${tierColor(tier)}" opacity="0.85"><title>${tier}</title></polygon>`;
+  }).join('');
+  const legend = TIERS.map((t, i) => `<g transform="translate(${W - PAD_R + 16}, ${PAD_T + i * 18})"><rect width="10" height="10" fill="${tierColor(t)}"/><text x="14" y="9" font-size="10" fill="#6b6b6b">${t}</text></g>`).join('');
+  const yTicks = 4;
+  let grid = '';
+  for (let i = 0; i <= yTicks; i++) {
+    const y = PAD_T + (innerH * i) / yTicks;
+    const v = Math.round((max * (yTicks - i)) / yTicks);
+    grid += `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#e5e5e5" stroke-width="1"/><text x="${PAD_L - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#9a9a9a">${v}</text>`;
+  }
+  const labelEvery = Math.max(1, Math.ceil(n / 10));
+  const xlabels = days.map((d, i) => i % labelEvery !== 0 ? '' : `<text x="${xAt(i)}" y="${H - 8}" fill="#9a9a9a" font-size="10" text-anchor="middle">${d.slice(5)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${grid}${areas}${xlabels}${legend}</svg>`;
 }
 
 function renderHeatmapSvg(grid) {
@@ -494,6 +676,24 @@ function renderHeatmapSvg(grid) {
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${cells}${labels}</svg>`;
 }
 
+function renderSparkline(values) {
+  if (!values || !values.length) return '';
+  const W = 90, H = 24;
+  const max = Math.max(1, ...values);
+  const step = values.length > 1 ? W / (values.length - 1) : W;
+  const pts = values.map((v, i) => `${(i * step).toFixed(1)},${(H - (v / max) * (H - 2) - 1).toFixed(1)}`).join(' ');
+  const bars = values.map((v, i) => {
+    const h = (v / max) * (H - 2);
+    const x = i * step;
+    return `<rect x="${x.toFixed(1)}" y="${(H - h - 1).toFixed(1)}" width="${Math.max(0.8, step - 0.6).toFixed(1)}" height="${h.toFixed(1)}" fill="oklch(55% 0.13 250)" opacity="0.6"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="sparkline">${bars}<polyline points="${pts}" fill="none" stroke="oklch(40% 0.15 250)" stroke-width="1"/></svg>`;
+}
+
+// ============================================================================
+// COMMON HELPERS
+// ============================================================================
+
 function renderFooter(community, p) {
   const date = iso => iso.slice(0, 10);
   return `<footer>
@@ -502,19 +702,130 @@ function renderFooter(community, p) {
 </footer>`;
 }
 
+function renderDrillDownModal() {
+  return `<div class="modal" id="member-modal" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel" role="dialog" aria-labelledby="modal-title">
+    <button type="button" class="modal-close" data-close aria-label="Close">×</button>
+    <h3 id="modal-title">Member</h3>
+    <div id="modal-body"></div>
+  </div>
+</div>`;
+}
+
+function tierClass(tier) {
+  return (tier || '').toLowerCase().replace(/[^a-z]/g, '');
+}
+
+function tierColor(tier) {
+  return { Champion: 'oklch(55% 0.14 145)', Power: 'oklch(55% 0.13 250)', Regular: 'oklch(70% 0.08 250)', Occasional: 'oklch(80% 0.04 250)', 'One-time': 'oklch(85% 0.02 250)', Lurker: 'oklch(90% 0.01 250)' }[tier] ?? 'oklch(70% 0.04 250)';
+}
+
+function riskColor(score) {
+  if (score >= 70) return 'oklch(55% 0.16 30)';
+  if (score >= 40) return 'oklch(65% 0.14 60)';
+  return 'oklch(70% 0.12 145)';
+}
+
 function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-const TAB_JS = `
-const buttons = document.querySelectorAll('.tab-btn');
+// ============================================================================
+// JS (tabs, sub-nav, sort, filter, modal, collapse)
+// ============================================================================
+
+const JS = `
 const body = document.body;
-buttons.forEach(btn => btn.addEventListener('click', () => {
-  buttons.forEach(b => b.classList.remove('active'));
+document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   body.dataset.activeTab = btn.dataset.tab;
 }));
+
+document.querySelectorAll('.filter-pill').forEach(p => p.addEventListener('click', () => {
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+  p.classList.add('active');
+  const f = p.dataset.filter;
+  document.querySelectorAll('.member-row').forEach(row => {
+    if (f === 'All') row.style.display = '';
+    else {
+      const tags = (row.dataset.filter || '').split(' ');
+      row.style.display = tags.includes(f) ? '' : 'none';
+    }
+  });
+}));
+
+document.querySelectorAll('.sortable').forEach(th => th.addEventListener('click', () => {
+  const sort = th.dataset.sort;
+  const tbody = th.closest('table').querySelector('tbody');
+  const rows = [...tbody.querySelectorAll('tr')];
+  const asc = th.dataset.dir === 'asc';
+  rows.sort((a, b) => {
+    const av = parseFloat(a.dataset[sort] || 0);
+    const bv = parseFloat(b.dataset[sort] || 0);
+    return asc ? av - bv : bv - av;
+  });
+  th.dataset.dir = asc ? 'desc' : 'asc';
+  document.querySelectorAll('.sortable').forEach(t => { if (t !== th) t.dataset.dir = ''; });
+  rows.forEach(r => tbody.appendChild(r));
+}));
+
+const modal = document.getElementById('member-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalBody = document.getElementById('modal-body');
+
+function openMember(name) {
+  modalTitle.textContent = name;
+  const row = document.querySelector('.member-row[data-member="' + name.replace(/"/g, '\\\\"') + '"]');
+  let html = '';
+  if (row) {
+    const d = row.dataset;
+    html = '<dl class="kv-dl">' +
+      '<dt>Tier</dt><dd>' + (row.querySelector('.tier-pill')?.textContent || '—') + '</dd>' +
+      '<dt>Activity</dt><dd>' + (d.activity || 0) + ' messages</dd>' +
+      '<dt>Attention</dt><dd>' + (d.attention || 0) + ' replies received</dd>' +
+      '<dt>Influence</dt><dd>' + (d.influence || 0) + '</dd>' +
+      '<dt>Giver %</dt><dd>' + Math.round((parseFloat(d.giver) || 0) * 100) + '%</dd>' +
+      '<dt>Buy signals</dt><dd>' + (d.buy || 0) + '</dd>' +
+      '<dt>Disengage risk</dt><dd>' + (d.risk || 0) + ' / 100</dd>' +
+      '<dt>Last active</dt><dd>' + (d.last || 0) + ' days ago</dd>' +
+    '</dl>' +
+    '<p class="muted">For a full narrative dossier, run <code>/vibra-code-lite:profile &lt;path&gt; --member "' + name + '"</code>.</p>';
+  } else {
+    html = '<p class="muted">No row in the member intelligence table for this name. Try <code>/vibra-code-lite:members</code> for the full roster.</p>';
+  }
+  modalBody.innerHTML = html;
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+document.addEventListener('click', (ev) => {
+  const link = ev.target.closest('.member-link');
+  if (link) {
+    ev.preventDefault();
+    openMember(link.dataset.member || link.textContent);
+    return;
+  }
+  if (ev.target.closest('[data-close]')) {
+    modal.setAttribute('aria-hidden', 'true');
+  }
+});
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape') modal.setAttribute('aria-hidden', 'true');
+});
+
+document.querySelectorAll('.subnav-link').forEach(a => a.addEventListener('click', (ev) => {
+  ev.preventDefault();
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}));
 `;
+
+// ============================================================================
+// CSS
+// ============================================================================
 
 const CSS = `
 :root {
@@ -525,45 +836,46 @@ const CSS = `
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif; font-size: 15px; line-height: 1.55; color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-.page { max-width: 1080px; margin: 0 auto; padding: 56px 40px 40px; }
+.page { max-width: 1120px; margin: 0 auto; padding: 56px 40px 40px; }
 header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 16px; }
 h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; margin: 0 0 6px; }
 .eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 12px; }
 .subtitle { font-size: 14px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-subtle); margin: 0 0 14px; }
-h3 { font-size: 14px; font-weight: 500; margin: 20px 0 8px; letter-spacing: -0.01em; }
+h3 { font-size: 12px; font-weight: 600; margin: 20px 0 8px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
 .muted { color: var(--text-subtle); font-size: 13px; }
 .dim { color: var(--text-subtle); font-size: 0.6em; }
 
-.tabs { display: flex; gap: 2px; margin: 20px 0 24px; border-bottom: 1px solid var(--border); align-items: center; }
-.tab-btn { background: transparent; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; letter-spacing: 0.01em; }
+.tabs { display: flex; gap: 2px; margin: 20px 0 0; border-bottom: 1px solid var(--border); align-items: center; }
+.tab-btn { background: transparent; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; }
 .tab-btn:hover { color: var(--text); }
 .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
 .print-btn { margin-left: auto; background: transparent; border: 1px solid var(--border); padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 12px; color: var(--text-muted); font-family: inherit; }
 .print-btn:hover { color: var(--text); border-color: var(--border-strong); }
 
+.subnav { display: flex; flex-wrap: wrap; gap: 2px; padding: 12px 0 8px; margin: 0 0 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+.subnav-link { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); padding: 6px 10px; text-decoration: none; border-radius: 3px; }
+.subnav-link:hover { background: var(--surface); color: var(--text); }
+
 .tab { display: none; }
-body[data-active-tab="cm"] #tab-cm,
-body[data-active-tab="business"] #tab-business { display: block; }
+body[data-active-tab="cm"] #tab-cm, body[data-active-tab="business"] #tab-business { display: block; }
 
 .cm-grid, .business-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .card { border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; background: var(--bg); }
 .card.wide { grid-column: 1 / -1; }
 .card-hint { color: var(--text-subtle); font-size: 12px; margin: -6px 0 14px; }
-.card h3 { color: var(--text-muted); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 20px; }
 
 .action-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .action-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
 .action-table .kind { width: 140px; color: var(--text-muted); }
-.action-table .who { width: 160px; }
+.action-table .who { width: 180px; }
 .action-table .when { width: 100px; color: var(--text-subtle); font-size: 12px; }
 .action-table .detail { color: var(--text-muted); }
 .action-table tr:last-child td { border-bottom: none; }
 
 .open-q { padding-left: 20px; margin: 0; }
-.open-q li { margin: 10px 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; list-style: decimal; }
+.open-q li { margin: 10px 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 .open-q li:last-child { border-bottom: none; }
-.open-q strong { font-weight: 500; }
 .open-q .when { color: var(--text-subtle); font-size: 12px; margin-left: 8px; }
 .open-q .q-text { margin-top: 4px; color: var(--text-muted); font-size: 14px; }
 
@@ -571,7 +883,7 @@ body[data-active-tab="business"] #tab-business { display: block; }
 .threads li { margin: 12px 0; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .threads li:last-child { border-bottom: none; }
 .thread-head { display: flex; align-items: baseline; gap: 10px; }
-.thread-head .rank { color: var(--text-subtle); font-size: 12px; font-variant-numeric: tabular-nums; width: 20px; }
+.thread-head .rank { color: var(--text-subtle); font-size: 12px; width: 20px; }
 .thread-head .when { color: var(--text-subtle); font-size: 12px; margin-left: auto; }
 .thread-snippet { color: var(--text-muted); font-size: 13px; margin-top: 4px; padding-left: 30px; }
 
@@ -590,7 +902,8 @@ body[data-active-tab="business"] #tab-business { display: block; }
 .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .metric .value { font-size: 30px; font-weight: 400; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .metric .label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-.metric .sub { font-size: 12px; color: var(--text-subtle); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.metric .sub { font-size: 12px; color: var(--text-subtle); margin-top: 2px; }
+.metric .sub.bench { color: oklch(55% 0.14 145); }
 
 .kv { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
 .kv th, .kv td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
@@ -606,20 +919,6 @@ body[data-active-tab="business"] #tab-business { display: block; }
 .contributors .count { text-align: right; width: 50px; color: var(--text-muted); font-size: 13px; }
 .contributors .bar-cell { width: 40%; padding-left: 20px; }
 .bar { height: 4px; background: var(--accent); border-radius: 0; }
-
-.personas { width: 100%; border-collapse: collapse; font-size: 13px; }
-.personas th, .personas td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
-.personas th { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
-.personas .persona-label { width: 180px; }
-.personas .persona-count { width: 60px; color: var(--text-muted); }
-.personas .persona-top { color: var(--text-muted); }
-
-.topic-list { columns: 2; column-gap: 32px; padding-left: 0; list-style: none; margin: 8px 0; }
-.topic-list li { break-inside: avoid; padding: 4px 0; font-size: 14px; }
-.topic-list .when { color: var(--text-subtle); font-size: 12px; margin-left: 6px; }
-
-.agent-fill { border-left: 2px solid var(--accent-soft); padding-left: 14px; margin-top: 18px; }
-.agent-fill.card { border-left-width: 2px; }
 
 .tier-pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: oklch(70% 0.04 250); margin-left: 6px; }
 .tier-pill.tierchampion { background: oklch(55% 0.14 145); }
@@ -637,28 +936,92 @@ body[data-active-tab="business"] #tab-business { display: block; }
 .risk-fill { height: 100%; }
 .risk-num { font-size: 12px; color: var(--text-muted); min-width: 24px; text-align: right; }
 
-.tier-dist { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+.tier-dist { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; margin-bottom: 12px; }
 .tier-dist td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .tier-dist tr:last-child td { border-bottom: none; }
-.tier-dist .tier-label { width: 140px; }
+.tier-dist .tier-label, .tier-dist .stage-label { width: 160px; }
 .tier-dist .count { width: 50px; color: var(--text-muted); }
 .tier-dist .bar-cell { width: 60%; }
 .tier-dist .pct { width: 50px; text-align: right; color: var(--text-muted); }
 
+.filter-bar { display: flex; gap: 6px; margin: 12px 0 8px; flex-wrap: wrap; }
+.filter-pill { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; letter-spacing: 0.04em; }
+.filter-pill:hover { border-color: var(--border-strong); color: var(--text); }
+.filter-pill.active { background: var(--text); color: #fff; border-color: var(--text); }
+
 .member-intel { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
 .member-intel th, .member-intel td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
 .member-intel th { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
+.member-intel th.sortable { cursor: pointer; user-select: none; }
+.member-intel th.sortable:hover { color: var(--text); }
+.member-intel th.sortable::after { content: ' ⇅'; color: var(--text-subtle); opacity: 0.4; }
+.member-intel th.sortable[data-dir="asc"]::after { content: ' ↑'; opacity: 1; }
+.member-intel th.sortable[data-dir="desc"]::after { content: ' ↓'; opacity: 1; }
 .member-intel tr:last-child td { border-bottom: none; }
 .member-intel .rank { width: 24px; color: var(--text-subtle); }
 .member-intel .name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
 .member-intel .num { text-align: right; }
+.member-intel .spark { width: 100px; padding: 2px 8px; }
+.sparkline { vertical-align: middle; }
 .table-scroll { overflow-x: auto; }
 
 .mini { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .mini td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
 .mini tr:last-child td { border-bottom: none; }
-.mini .pair { color: var(--text); }
 .mini .count { text-align: right; color: var(--text-muted); font-size: 12px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+
+.mix-bar { width: 100%; height: 14px; display: block; margin-bottom: 12px; border-radius: 3px; overflow: hidden; }
+
+.topic-list { columns: 2; column-gap: 32px; padding-left: 0; list-style: none; margin: 8px 0; }
+.topic-list li { break-inside: avoid; padding: 4px 0; font-size: 14px; }
+.topic-list .when { color: var(--text-subtle); font-size: 12px; margin-left: 6px; }
+
+.pair-list { list-style: none; padding: 0; margin: 8px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.pair-list li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.pair-list li:last-child { border-bottom: none; }
+.pair-list .when { color: var(--text-subtle); font-size: 12px; margin-left: 8px; }
+
+.health-wrap { display: grid; grid-template-columns: 200px 1fr; gap: 32px; align-items: center; }
+.health-gauge { flex-shrink: 0; }
+.health-components table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.health-components td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.health-components td:first-child { color: var(--text-muted); }
+.health-components td.bar-cell { width: 50%; }
+.health-components td.num { text-align: right; width: 50px; }
+
+.network-wrap { border: 1px solid var(--border); border-radius: 4px; background: var(--surface); margin: 12px 0; }
+.network-svg { display: block; width: 100%; height: auto; }
+.node { cursor: pointer; }
+.node:hover circle { stroke: var(--text); stroke-width: 2; }
+
+.intros { width: 100%; border-collapse: collapse; font-size: 12px; }
+.intros th, .intros td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.intros th { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
+.intros tr:last-child td { border-bottom: none; }
+.confidence { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; }
+.confidence-high { background: oklch(55% 0.14 145); color: #fff; }
+.confidence-med { background: oklch(60% 0.13 200); color: #fff; }
+.confidence-low { background: oklch(92% 0.01 250); color: var(--text-muted); }
+
+.member-link { cursor: pointer; border-bottom: 1px dashed var(--accent-soft); }
+.member-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+.modal { position: fixed; inset: 0; display: none; z-index: 100; }
+.modal[aria-hidden="false"] { display: block; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+.modal-panel { position: relative; max-width: 480px; margin: 10vh auto; background: var(--bg); border-radius: 6px; padding: 32px 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-panel h3 { font-size: 18px; text-transform: none; letter-spacing: normal; color: var(--text); margin: 0 0 16px; font-weight: 500; }
+.modal-close { position: absolute; top: 12px; right: 16px; background: transparent; border: none; font-size: 22px; color: var(--text-subtle); cursor: pointer; }
+.modal-close:hover { color: var(--text); }
+.kv-dl { display: grid; grid-template-columns: 140px 1fr; gap: 8px 16px; font-size: 13px; margin: 0 0 16px; }
+.kv-dl dt { color: var(--text-muted); }
+.kv-dl dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.agent-fill { border-left: 2px solid var(--accent-soft); padding-left: 14px; margin-top: 18px; }
+.agent-fill.card { border-left-width: 2px; }
+.jtbd-list, .reco-list { padding-left: 20px; margin: 8px 0; }
+.jtbd-list li, .reco-list li { margin: 10px 0; }
 
 code { font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 0.88em; background: var(--surface); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
 
@@ -669,19 +1032,21 @@ footer a:hover { color: var(--text); }
 @media print {
   html, body { background: #fff; color: #1a1a1a; font-size: 10.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .page { padding: 0; max-width: none; }
-  nav.tabs, .print-btn { display: none !important; }
-  body[data-active-tab="cm"] #tab-business,
-  body[data-active-tab="business"] #tab-cm { display: none !important; }
+  nav.tabs, .print-btn, .subnav, .filter-bar, .modal, .modal-close { display: none !important; }
+  body[data-active-tab="cm"] #tab-business, body[data-active-tab="business"] #tab-cm { display: none !important; }
   .card { border: 1px solid #e5e5e5; page-break-inside: avoid; }
   h1 { font-size: 20pt; }
   .metric .value { font-size: 18pt; }
   .cm-grid, .business-grid { grid-template-columns: 1fr; }
+  .health-wrap { grid-template-columns: 140px 1fr; }
+  .member-intel { font-size: 9pt; }
   @page { margin: 18mm 16mm; @bottom-center { content: "Powered by Vibra · getvibra.co"; font-size: 9pt; color: #9a9a9a; } }
 }
 
 @media (max-width: 900px) {
-  .cm-grid, .business-grid, .metrics, .two-col, .topic-list { grid-template-columns: 1fr !important; columns: 1 !important; }
+  .cm-grid, .business-grid, .metrics, .two-col, .topic-list, .health-wrap { grid-template-columns: 1fr !important; columns: 1 !important; }
   .page { padding: 32px 20px; }
   .metrics { gap: 16px; }
+  .subnav { overflow-x: auto; flex-wrap: nowrap; }
 }
 `;

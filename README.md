@@ -1,18 +1,18 @@
 <div align="center">
 
-# Vibra
+# Vibra Code Lite
 
-### The new community manager hire for professional communities.
+### The open-source Claude Code plugin from Vibra — your new community manager hire for professional communities.
 
 [**→ getvibra.co**](https://getvibra.co) · [Install](#install) · [All commands](#what-you-get) · [Contact](#about-vibra)
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Version](https://img.shields.io/badge/version-0.2.0-black)](CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-45%20passing-black)](tests/) [![Website](https://img.shields.io/badge/website-getvibra.co-2c5aa0)](https://getvibra.co)
+[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Version](https://img.shields.io/badge/version-0.3.0-black)](CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-45%20passing-black)](tests/) [![Website](https://img.shields.io/badge/website-getvibra.co-2c5aa0)](https://getvibra.co)
 
 </div>
 
 ---
 
-Vibra is a Claude Code plugin from [Vibra](https://getvibra.co) that acts as the community manager hire for paid, invite-only, and professional WhatsApp communities. It reads a chat export and turns hours of weekly scrolling into the artifacts a CM actually needs: weekly digests, unanswered-question follow-up queues, retention dashboards, member profiles, newsletter content, and stakeholder reports.
+**Vibra Code Lite** is a Claude Code plugin from [Vibra](https://getvibra.co) that acts as the community manager hire for paid, invite-only, and professional WhatsApp communities. It reads a chat export and turns hours of weekly scrolling into the artifacts a CM actually needs: weekly digests, unanswered-question follow-up queues, retention dashboards, member profiles, newsletter content, and stakeholder reports.
 
 Everything runs on your laptop. No external services. No API keys. Your community data never leaves your machine.
 
@@ -34,17 +34,17 @@ Ten skills, each mapped to one job you already do.
 
 | Skill | What it does |
 | --- | --- |
-| `/vibra:digest` | Weekly catch-up — top threads, open asks, new members, who went quiet |
-| `/vibra:unanswered` | AI-judged list of questions that didn't get a real answer. Your follow-up queue |
-| `/vibra:pulse` | Interactive HTML dashboard — activity curve, heatmap, response rate, roster-vs-active ratio. Cmd+P prints to PDF |
-| `/vibra:action-list` | Monday-morning DM queue — silent joiners, welcome gaps, frustration signals, shoutout candidates |
-| `/vibra:content-ideas` | Newsletter fuel — best links, quotable member messages, tool mentions |
-| `/vibra:profile` | One-page dossier on a specific member. Before a 1-on-1 call |
-| `/vibra:report` | Monthly report for your owner/founder/board |
-| `/vibra:members` | Full member list with counts. Find exact names or audit the roster |
-| `/vibra:parse` | Normalized JSON dump of the export. For chaining with your own tools |
-| `/vibra:analyze-whatsapp` | Orchestrator — just drop a path and ask in plain language |
-| `/vibra:help` | Quick reference: what Vibra is, all commands, how to contact us |
+| `/vibra-code-lite:digest` | Weekly catch-up — top threads, open asks, new members, who went quiet |
+| `/vibra-code-lite:unanswered` | AI-judged list of questions that didn't get a real answer. Your follow-up queue |
+| `/vibra-code-lite:pulse` | Interactive HTML dashboard — activity curve, heatmap, response rate, roster-vs-active ratio. Cmd+P prints to PDF |
+| `/vibra-code-lite:action-list` | Monday-morning DM queue — silent joiners, welcome gaps, frustration signals, shoutout candidates |
+| `/vibra-code-lite:content-ideas` | Newsletter fuel — best links, quotable member messages, tool mentions |
+| `/vibra-code-lite:profile` | One-page dossier on a specific member. Before a 1-on-1 call |
+| `/vibra-code-lite:report` | Monthly report for your owner/founder/board |
+| `/vibra-code-lite:members` | Full member list with counts. Find exact names or audit the roster |
+| `/vibra-code-lite:parse` | Normalized JSON dump of the export. For chaining with your own tools |
+| `/vibra-code-lite:analyze-whatsapp` | Orchestrator — just drop a path and ask in plain language |
+| `/vibra-code-lite:help` | Quick reference: what Vibra is, all commands, how to contact us |
 
 ---
 
@@ -99,19 +99,19 @@ If Node is missing or older:
 Open Claude Code (terminal `claude` command, or the desktop app — both work). Then run these commands in order:
 
 ```
-/plugin marketplace add hjbarraza/vibra-plugin
-/plugin install vibra@getvibra
+/plugin marketplace add hjbarraza/vibra-code-lite
+/plugin install vibra-code-lite@getvibra
 /reload-plugins
 ```
 
-The `/reload-plugins` step activates the newly-installed commands in your current session. If the `/vibra:*` commands still don't appear after reloading, **exit Claude Code (Ctrl+C twice, or `/exit`) and start a fresh session** — that guarantees the plugin loads cleanly.
+The `/reload-plugins` step activates the newly-installed commands in your current session. If the `/vibra-code-lite:*` commands still don't appear after reloading, **exit Claude Code (Ctrl+C twice, or `/exit`) and start a fresh session** — that guarantees the plugin loads cleanly.
 
 Verify it worked:
 ```
-/vibra:pulse
+/vibra-code-lite:pulse
 ```
 
-Should either show the usage hint (path required) or auto-complete. If instead you see "command not found," re-check the `/plugin` **Installed** tab (should list `vibra`) and the **Errors** tab (should be empty).
+Should either show the usage hint (path required) or auto-complete. If instead you see "command not found," re-check the `/plugin` **Installed** tab (should list `vibra-code-lite`) and the **Errors** tab (should be empty).
 
 Update later:
 ```
@@ -125,8 +125,8 @@ Update later:
 
 ```bash
 cd ~/Code
-git clone https://github.com/hjbarraza/vibra-plugin.git
-claude --plugin-dir /absolute/path/to/vibra-plugin
+git clone https://github.com/hjbarraza/vibra-code-lite.git
+claude --plugin-dir /absolute/path/to/vibra-code-lite
 ```
 
 Zero dependencies to compile. No `npm install` needed.
@@ -156,7 +156,7 @@ If you got a `.zip`, unzip it. The file you actually need is `_chat.txt` (iOS) o
 
 ```bash
 cd ~/your-working-folder       # where you want Vibra's output to land
-claude --plugin-dir /absolute/path/to/vibra-plugin
+claude --plugin-dir /absolute/path/to/vibra-code-lite
 ```
 
 First time: Claude Code will ask for two optional settings (where to save artifacts, preferred language). Accept the defaults.
@@ -186,12 +186,12 @@ Cmd+P (or Ctrl+P) → **Save as PDF** → you have a printable report with a "Po
 
 ## How to use each skill
 
-You can call a skill directly with `/vibra:<name>` or just describe what you want.
+You can call a skill directly with `/vibra-code-lite:<name>` or just describe what you want.
 
 ### Weekly catch-up
 
 ```
-/vibra:digest ~/Downloads/_chat.txt
+/vibra-code-lite:digest ~/Downloads/_chat.txt
 ```
 
 Produces a markdown summary — top threads, open asks, new members this week, members who went quiet. Windowed to the last 7 days of data by default; override with `--since YYYY-MM-DD --until YYYY-MM-DD`.
@@ -199,7 +199,7 @@ Produces a markdown summary — top threads, open asks, new members this week, m
 ### Who's waiting for a reply
 
 ```
-/vibra:unanswered ~/Downloads/_chat.txt
+/vibra-code-lite:unanswered ~/Downloads/_chat.txt
 ```
 
 Surfaces questions that didn't get a substantive answer. Not keyword matching — the agent reads the surrounding conversation and judges whether each question was actually addressed. Three sections: **unanswered**, **partially answered**, **fully answered**.
@@ -207,7 +207,7 @@ Surfaces questions that didn't get a substantive answer. Not keyword matching �
 ### Community dashboard (with PDF export)
 
 ```
-/vibra:pulse ~/Downloads/_chat.txt
+/vibra-code-lite:pulse ~/Downloads/_chat.txt
 ```
 
 Interactive HTML — activity curve by day, day-by-hour heatmap, top contributors, roster-vs-active ratio, response rate, concentration (Gini). Open in browser. Cmd+P for PDF.
@@ -215,7 +215,7 @@ Interactive HTML — activity curve by day, day-by-hour heatmap, top contributor
 ### Your DM queue
 
 ```
-/vibra:action-list ~/Downloads/_chat.txt
+/vibra-code-lite:action-list ~/Downloads/_chat.txt
 ```
 
 Four sections in one markdown artifact:
@@ -227,7 +227,7 @@ Four sections in one markdown artifact:
 ### Newsletter / content ideas
 
 ```
-/vibra:content-ideas ~/Downloads/_chat.txt
+/vibra-code-lite:content-ideas ~/Downloads/_chat.txt
 ```
 
 Top links by engagement, quotable member messages, tools and products mentioned. Fuel for your weekly newsletter or socials.
@@ -235,17 +235,17 @@ Top links by engagement, quotable member messages, tools and products mentioned.
 ### One-page member profile
 
 ```
-/vibra:profile ~/Downloads/_chat.txt --member "Josu San Martin"
+/vibra-code-lite:profile ~/Downloads/_chat.txt --member "Josu San Martin"
 ```
 
 Who are they? What do they care about? Who do they engage with most? Before a 1-on-1 or a sponsor intro, you get a narrative dossier.
 
-Don't know the exact name? Run `/vibra:members` first to see the full roster, or just ask Claude to find the right member — it'll fuzzy-match.
+Don't know the exact name? Run `/vibra-code-lite:members` first to see the full roster, or just ask Claude to find the right member — it'll fuzzy-match.
 
 ### Monthly stakeholder report
 
 ```
-/vibra:report ~/Downloads/_chat.txt
+/vibra-code-lite:report ~/Downloads/_chat.txt
 ```
 
 30-day default window. Growth vs prior period, health, top threads, contributors, what needs attention, what's next. Framed for the owner / founder / board, not the CM.
@@ -253,7 +253,7 @@ Don't know the exact name? Run `/vibra:members` first to see the full roster, or
 ### Member list / roster audit
 
 ```
-/vibra:members ~/Downloads/_chat.txt
+/vibra-code-lite:members ~/Downloads/_chat.txt
 ```
 
 Every member, ranked by messages. Find exact names for profile lookups. See who's never posted.
@@ -281,7 +281,7 @@ Vibra's parser handles it. Processing is fast (seconds, not minutes). Artifacts 
 Yes — run any command twice with different `--since` / `--until` windows and compare the outputs. Or ask Claude: _"digest for last week vs the week before"_.
 
 **Do I have to retype the file path for every command?**
-Not really. Claude reads the conversation — once you've pointed it at an export, subsequent questions use the same one. For slash-command usage (`/vibra:digest` with no args), set `VIBRA_EXPORT=/path/to/_chat.txt` in your shell and every command picks it up automatically.
+Not really. Claude reads the conversation — once you've pointed it at an export, subsequent questions use the same one. For slash-command usage (`/vibra-code-lite:digest` with no args), set `VIBRA_EXPORT=/path/to/_chat.txt` in your shell and every command picks it up automatically.
 
 **Where does the output go?**
 `./vibra-output/` by default. You can change the default during plugin setup, or pass `--output-dir ~/Documents/my-community-artifacts` per command.
@@ -295,15 +295,15 @@ If you installed via marketplace:
 
 If you cloned the repo:
 ```bash
-cd /path/to/vibra-plugin
+cd /path/to/vibra-code-lite
 git pull
 ```
 
-**The `/vibra:*` commands don't appear after install.**
+**The `/vibra-code-lite:*` commands don't appear after install.**
 Run `/reload-plugins`. If that doesn't fix it, exit Claude Code and open a fresh session. If they're still missing, check `/plugin` → **Errors** tab for load failures, and try `claude --debug` to see what's happening at startup.
 
 **I'm stuck.**
-Open an issue: https://github.com/hjbarraza/vibra-plugin/issues
+Open an issue: https://github.com/hjbarraza/vibra-code-lite/issues
 
 ---
 
@@ -326,7 +326,7 @@ A **Pro tier** is planned that adds persistent storage — so re-exporting weekl
 ## For developers
 
 ```bash
-cd /path/to/vibra-plugin
+cd /path/to/vibra-code-lite
 
 # Run the test suite (44 tests, <100ms)
 node --test "tests/*.test.js"
@@ -345,6 +345,6 @@ Vibra is building the new community manager hire for professional communities. T
 
 - Website: [getvibra.co](https://getvibra.co)
 - Contact: hello@getvibra.co
-- Issues & feature requests: https://github.com/hjbarraza/vibra-plugin/issues
+- Issues & feature requests: https://github.com/hjbarraza/vibra-code-lite/issues
 
 Built with Claude Code.

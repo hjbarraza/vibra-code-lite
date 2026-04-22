@@ -5,20 +5,20 @@
     "email": "hello@getvibra.co"
   },
   "metadata": {
-    "description": "Vibra — the new community manager hire for professional communities. https://getvibra.co",
-    "version": "0.2.0"
+    "description": "Open-source plugins from Vibra (https://getvibra.co) — the new community manager hire for professional communities.",
+    "version": "0.3.0"
   },
   "plugins": [
     {
-      "name": "vibra",
+      "name": "vibra-code-lite",
       "source": "./",
-      "description": "The new community manager hire for professional WhatsApp communities. Runs locally, no API keys.",
-      "version": "0.2.0",
+      "description": "Vibra Code Lite — WhatsApp community intelligence plugin for Claude Code. Local-first, no API keys.",
+      "version": "0.3.0",
       "author": { "name": "Vibra", "url": "https://getvibra.co" },
       "license": "MIT",
       "homepage": "https://getvibra.co",
-      "repository": "https://github.com/hjbarraza/vibra-plugin",
-      "keywords": ["whatsapp", "community", "community-manager", "analytics", "digest", "retention", "getvibra"],
+      "repository": "https://github.com/hjbarraza/vibra-code-lite",
+      "keywords": ["whatsapp", "community", "community-manager", "analytics", "digest", "retention", "getvibra", "vibra-code-lite"],
       "category": "productivity"
     }
   ]

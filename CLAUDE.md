@@ -1,4 +1,4 @@
-# CLAUDE.md — vibra-plugin
+# CLAUDE.md — vibra-code-lite
 
 Behavioral guidance for Claude when working on this plugin.
 

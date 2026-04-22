@@ -14,16 +14,16 @@ Help a community manager get intelligence from their WhatsApp group chat export.
 
 | User intent | Command |
 | --- | --- |
-| Weekly catch-up, what happened | `/vibra:digest <path>` |
-| Who's waiting for a reply, follow-up list | `/vibra:unanswered <path>` |
-| Community health dashboard, activity curves, heatmap | `/vibra:pulse <path>` |
-| Monday-morning DM queue — silent joiners, frustration, shoutouts | `/vibra:action-list <path>` |
-| Newsletter content, quotes, tool mentions | `/vibra:content-ideas <path>` |
-| Dossier on a specific member | `/vibra:profile <path> --member "<name>"` |
-| Monthly report for owner/founder/board | `/vibra:report <path>` |
-| List members / look up names | `/vibra:members <path>` |
-| Just normalize to JSON | `/vibra:parse <path>` |
-| "What can this do?" / "How do I contact you?" | `/vibra:help` |
+| Weekly catch-up, what happened | `/vibra-code-lite:digest <path>` |
+| Who's waiting for a reply, follow-up list | `/vibra-code-lite:unanswered <path>` |
+| Community health dashboard, activity curves, heatmap | `/vibra-code-lite:pulse <path>` |
+| Monday-morning DM queue — silent joiners, frustration, shoutouts | `/vibra-code-lite:action-list <path>` |
+| Newsletter content, quotes, tool mentions | `/vibra-code-lite:content-ideas <path>` |
+| Dossier on a specific member | `/vibra-code-lite:profile <path> --member "<name>"` |
+| Monthly report for owner/founder/board | `/vibra-code-lite:report <path>` |
+| List members / look up names | `/vibra-code-lite:members <path>` |
+| Just normalize to JSON | `/vibra-code-lite:parse <path>` |
+| "What can this do?" / "How do I contact you?" | `/vibra-code-lite:help` |
 
 4. Pass `--since YYYY-MM-DD` / `--until YYYY-MM-DD` if the user named a window.
 5. For a cross-period comparison ("this week vs last week"), run the relevant command twice with different windows and compare the two JSON outputs yourself — no dedicated compare script needed.

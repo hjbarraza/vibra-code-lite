@@ -88,7 +88,7 @@ Expected HTML:
 </ol>
 ```
 
-Step 4 — also fill the CM-tab `openQuestionBundles` LLM judgment if time allows. Optional for v0.1: users can run `/vibra:unanswered` for the full judged list.
+Step 4 — also fill the CM-tab `openQuestionBundles` LLM judgment if time allows. Optional for v0.1: users can run `/vibra-code-lite:unanswered` for the full judged list.
 
 Step 5 — report back to the user. Summary:
 - Community + window

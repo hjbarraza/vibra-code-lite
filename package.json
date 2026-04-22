@@ -1,6 +1,6 @@
 {
-  "name": "vibra-plugin",
-  "version": "0.2.0",
+  "name": "vibra-code-lite",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -18,7 +18,7 @@
   "homepage": "https://getvibra.co",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hjbarraza/vibra-plugin"
+    "url": "https://github.com/hjbarraza/vibra-code-lite"
   },
   "author": {
     "name": "Vibra",

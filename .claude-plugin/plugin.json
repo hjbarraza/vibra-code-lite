@@ -1,13 +1,13 @@
 {
-  "name": "vibra",
-  "description": "The new community manager hire for professional WhatsApp communities. Weekly digests, unanswered-question follow-ups, retention dashboards, stakeholder reports — all locally, no API keys.",
-  "version": "0.2.0",
+  "name": "vibra-code-lite",
+  "description": "Vibra Code Lite — the open-source Claude Code plugin from Vibra. WhatsApp community intelligence for professional communities. Local-first, no API keys.",
+  "version": "0.3.0",
   "author": {
     "name": "Vibra",
     "url": "https://getvibra.co"
   },
   "homepage": "https://getvibra.co",
-  "repository": "https://github.com/hjbarraza/vibra-plugin",
+  "repository": "https://github.com/hjbarraza/vibra-code-lite",
   "license": "MIT",
   "keywords": [
     "whatsapp",

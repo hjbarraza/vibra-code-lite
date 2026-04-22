@@ -1,6 +1,6 @@
 ---
 name: members
-description: List all members of a community with message counts, first-seen and last-seen dates. Use when the user wants to see who's in the community, look up an exact member name for /vibra:profile, or audit the roster.
+description: List all members of a community with message counts, first-seen and last-seen dates. Use when the user wants to see who's in the community, look up an exact member name for /vibra-code-lite:profile, or audit the roster.
 argument-hint: <path-to-export.txt> [--since YYYY-MM-DD] [--until YYYY-MM-DD]
 allowed-tools: Bash(vibra-members.js *)
 ---
