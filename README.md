@@ -1,12 +1,22 @@
+<div align="center">
+
 # Vibra
 
-**The new community manager hire for professional communities.**
+### The new community manager hire for professional communities.
+
+[**→ getvibra.co**](https://getvibra.co) · [Install](#install) · [All commands](#what-you-get) · [Contact](#about-vibra)
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Version](https://img.shields.io/badge/version-0.2.0-black)](CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-45%20passing-black)](tests/) [![Website](https://img.shields.io/badge/website-getvibra.co-2c5aa0)](https://getvibra.co)
+
+</div>
+
+---
 
 Vibra is a Claude Code plugin from [Vibra](https://getvibra.co) that acts as the community manager hire for paid, invite-only, and professional WhatsApp communities. It reads a chat export and turns hours of weekly scrolling into the artifacts a CM actually needs: weekly digests, unanswered-question follow-up queues, retention dashboards, member profiles, newsletter content, and stakeholder reports.
 
 Everything runs on your laptop. No external services. No API keys. Your community data never leaves your machine.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE) [![Version](https://img.shields.io/badge/version-0.1.1-black)](CHANGELOG.md) [![Tests](https://img.shields.io/badge/tests-45%20passing-black)](tests/) [![Website](https://img.shields.io/badge/website-getvibra.co-black)](https://getvibra.co)
+> **Want the full product?** This open-source plugin is the local-first entry point. For the hosted experience with longitudinal memory, team collaboration, and richer intelligence views — visit [**getvibra.co**](https://getvibra.co).
 
 ---
 

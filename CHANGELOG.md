@@ -4,6 +4,25 @@ All notable changes to Vibra are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-04-22
+
+Inspired by the hosted Vibra product at [getvibra.co](https://getvibra.co). Pulse now surfaces the same intelligence concepts locally: engagement tiers, per-member attention/influence/giver%, disengage risk, network map, buy signals.
+
+### Added
+
+- **Member intelligence table** (Business tab) — every active member with Tier · Activity · Attention · Influence · Giver % · Buy signals · Risk · Last active. Ranked by activity; top 25 shown.
+- **Engagement tier classification** — Champion (top 10%) / Power (next 20%) / Regular (next 30%) / Occasional (3+ msgs) / One-time (1–2 msgs) / Lurker (roster, no posts). Distribution panel in Business tab with colored bars.
+- **At-risk members panel** (CM tab) — composite disengage-risk score per member (posting-trend decline + days-since-last-post), sorted by risk. Directly actionable DM queue.
+- **Network map** (Business tab) — top cross-member interaction pairs and most-connected nodes. Edges = substantive replies within 30 min.
+- **Revenue / buy signals** (Business tab) — members whose messages contain purchase-intent cues (pricing mentions, "worth it", "I'd pay…"). Heuristic-flagged in EN/ES/PT/FR.
+- New analyzer `src/analyzers/network-map.js` — pair-count + node-degree from co-occurrence.
+
+### Changed
+
+- `src/analyzers/personas.js` extended to compute per-member Attention (replies received), Influence (network-weighted), Giver %, Last active, Disengage risk score, Buy signal count, and Tier classification. Adds new clusters: `buy-curious`, `at-risk`.
+- README rewritten with a centered banner CTA linking to getvibra.co, plus a call-out positioning the plugin as the local-first entry point to the hosted Vibra product.
+- Version bumped to 0.2.0 — meaningful feature expansion.
+
 ## [0.1.1] — 2026-04-22
 
 ### Added

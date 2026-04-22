@@ -49,12 +49,29 @@ function renderCmTab(p) {
   return `
 <div class="cm-grid">
   ${renderActionQueue(p)}
+  ${renderAtRisk(p)}
   ${renderOpenQuestions(p)}
   ${renderTopThreads(p)}
   ${renderContentCards(p)}
   ${renderQuietAndNew(p)}
 </div>
 `;
+}
+
+function renderAtRisk(p) {
+  const atRisk = p.personas?.atRisk ?? [];
+  if (!atRisk.length) return `<div class="card"><h2>At-risk members</h2><p class="muted">No clear churn signals.</p></div>`;
+  const rows = atRisk.slice(0, 8).map(m => `
+    <tr>
+      <td><strong>${esc(m.name)}</strong> <span class="tier-pill tier-${m.tier.toLowerCase().replace(/[^a-z]/g, '')}">${esc(m.tier)}</span></td>
+      <td class="risk"><div class="risk-bar"><div class="risk-fill" style="width:${m.disengageRisk}%;background:${riskColor(m.disengageRisk)}"></div></div><span class="risk-num">${m.disengageRisk}</span></td>
+      <td class="muted">${m.daysSinceActive}d quiet · ${m.messages} msgs</td>
+    </tr>`).join('');
+  return `<div class="card wide">
+  <h2>At-risk members</h2>
+  <p class="card-hint">Composite disengage-risk score — posting-trend decline + days-since-last-post. Consider a check-in DM.</p>
+  <table class="risk-table"><tbody>${rows}</tbody></table>
+</div>`;
 }
 
 function renderActionQueue(p) {
@@ -175,6 +192,10 @@ function renderBusinessTab(p) {
 <div class="business-grid">
   ${renderVitals(p)}
   ${renderGrowth(p)}
+  ${renderTierDistribution(p)}
+  ${renderMemberIntel(p)}
+  ${renderNetworkMap(p)}
+  ${renderBuySignals(p)}
   ${renderActivityCharts(p)}
   ${renderPersonas(p)}
   ${renderTopics(p)}
@@ -182,6 +203,128 @@ function renderBusinessTab(p) {
   ${renderRecommendations(p)}
 </div>
 `;
+}
+
+function renderTierDistribution(p) {
+  const tiers = p.personas?.tierCounts ?? {};
+  const entries = [
+    ['Champion', tiers.Champion],
+    ['Power', tiers.Power],
+    ['Regular', tiers.Regular],
+    ['Occasional', tiers.Occasional],
+    ['One-time', tiers['One-time']],
+    ['Lurker', tiers.Lurker],
+  ];
+  const total = entries.reduce((s, [, n]) => s + (n || 0), 0);
+  if (total === 0) return '';
+  const rows = entries.map(([label, count]) => {
+    const pct = total > 0 ? (count / total) * 100 : 0;
+    return `<tr>
+      <td class="tier-label"><span class="tier-pill tier-${label.toLowerCase().replace(/[^a-z]/g, '')}">${label}</span></td>
+      <td class="count">${count}</td>
+      <td class="bar-cell"><div class="bar" style="width:${pct}%;background:${tierColor(label)}"></div></td>
+      <td class="pct">${pct.toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+  return `<div class="card wide">
+  <h2>Engagement tier distribution</h2>
+  <p class="card-hint">Champions (top 10% by messages) → Power (next 20%) → Regular (next 30%) → Occasional (3+ msgs) → One-time (1–2 msgs) → Lurker (roster, no posts).</p>
+  <table class="tier-dist"><tbody>${rows}</tbody></table>
+</div>`;
+}
+
+function renderMemberIntel(p) {
+  const members = [...(p.personas?.members ?? [])]
+    .sort((a, b) => b.messages - a.messages)
+    .slice(0, 25);
+  if (!members.length) return '';
+  const rows = members.map((m, i) => `
+    <tr>
+      <td class="rank">${i + 1}</td>
+      <td class="name"><strong>${esc(m.name)}</strong></td>
+      <td><span class="tier-pill tier-${m.tier.toLowerCase().replace(/[^a-z]/g, '')}">${esc(m.tier)}</span></td>
+      <td class="num">${m.messages}</td>
+      <td class="num">${m.attention}</td>
+      <td class="num">${m.influence}</td>
+      <td class="num">${Math.round(m.giverPct * 100)}%</td>
+      <td class="num">${m.buySignals > 0 ? m.buySignals : ''}</td>
+      <td class="num risk-cell"><span style="color:${riskColor(m.disengageRisk)}">${m.disengageRisk}</span></td>
+      <td class="muted">${m.daysSinceActive}d</td>
+    </tr>`).join('');
+  return `<div class="card wide">
+  <h2>Member intelligence</h2>
+  <p class="card-hint">Activity (msgs) · Attention (replies received) · Influence (network-weighted) · Giver % (replies given / msgs) · Buy (purchase-intent cues) · Risk (disengage score 0–100) · Last active (days).</p>
+  <div class="table-scroll">
+    <table class="member-intel">
+      <thead><tr>
+        <th></th><th>Member</th><th>Tier</th>
+        <th class="num">Activity</th><th class="num">Attention</th><th class="num">Influence</th>
+        <th class="num">Giver</th><th class="num">Buy</th><th class="num">Risk</th><th class="num">Last</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+</div>`;
+}
+
+function renderNetworkMap(p) {
+  const pairs = p.network?.topPairs ?? [];
+  const connectors = p.network?.topConnectors ?? [];
+  if (!pairs.length) return `<div class="card"><h2>Network map</h2><p class="muted">Not enough cross-member interactions to map.</p></div>`;
+  const pairRows = pairs.slice(0, 10).map(e => `
+    <tr>
+      <td class="pair"><strong>${esc(e.a)}</strong> ⟷ <strong>${esc(e.b)}</strong></td>
+      <td class="count">${e.count} interactions</td>
+    </tr>`).join('');
+  const nodeRows = connectors.slice(0, 10).map(n => `
+    <tr><td>${esc(n.name)}</td><td class="count">${n.degree}</td></tr>`).join('');
+  return `<div class="card wide">
+  <h2>Network map</h2>
+  <p class="card-hint">Who interacts with whom. Edges = message pairs within 30 minutes across distinct members (substantive replies only).</p>
+  <div class="two-col">
+    <div>
+      <h3>Top interaction pairs</h3>
+      <table class="mini"><tbody>${pairRows}</tbody></table>
+    </div>
+    <div>
+      <h3>Most connected members</h3>
+      <table class="mini"><tbody>${nodeRows}</tbody></table>
+    </div>
+  </div>
+</div>`;
+}
+
+function renderBuySignals(p) {
+  const buyCurious = p.personas?.buyCurious ?? [];
+  if (!buyCurious.length) return '';
+  const rows = buyCurious.slice(0, 8).map(m => `
+    <tr>
+      <td><strong>${esc(m.name)}</strong></td>
+      <td class="count">${m.buySignals} msg${m.buySignals === 1 ? '' : 's'}</td>
+      <td class="muted">Mentions pricing, packages, or purchase intent</td>
+    </tr>`).join('');
+  return `<div class="card wide">
+  <h2>Revenue / buy signals</h2>
+  <p class="card-hint">Members whose messages contained purchase-intent cues (pricing, subscriptions, "worth it", "I'd pay…"). Heuristic — the agent can judge specific cases in the JTBD section.</p>
+  <table class="mini"><tbody>${rows}</tbody></table>
+</div>`;
+}
+
+function tierColor(tier) {
+  return {
+    Champion: 'oklch(55% 0.14 145)',
+    Power: 'oklch(55% 0.13 250)',
+    Regular: 'oklch(70% 0.08 250)',
+    Occasional: 'oklch(80% 0.04 250)',
+    'One-time': 'oklch(85% 0.02 250)',
+    Lurker: 'oklch(90% 0.01 250)',
+  }[tier] ?? 'oklch(70% 0.04 250)';
+}
+
+function riskColor(score) {
+  if (score >= 70) return 'oklch(55% 0.16 30)';
+  if (score >= 40) return 'oklch(65% 0.14 60)';
+  return 'oklch(70% 0.12 145)';
 }
 
 function renderVitals(p) {
@@ -477,6 +620,45 @@ body[data-active-tab="business"] #tab-business { display: block; }
 
 .agent-fill { border-left: 2px solid var(--accent-soft); padding-left: 14px; margin-top: 18px; }
 .agent-fill.card { border-left-width: 2px; }
+
+.tier-pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #fff; background: oklch(70% 0.04 250); margin-left: 6px; }
+.tier-pill.tierchampion { background: oklch(55% 0.14 145); }
+.tier-pill.tierpower { background: oklch(55% 0.13 250); }
+.tier-pill.tierregular { background: oklch(65% 0.08 250); color: #1a1a1a; }
+.tier-pill.tieroccasional { background: oklch(80% 0.04 250); color: #1a1a1a; }
+.tier-pill.tieronetime { background: oklch(88% 0.02 250); color: #1a1a1a; }
+.tier-pill.tierlurker { background: oklch(92% 0.01 250); color: #6b6b6b; }
+
+.risk-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.risk-table td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.risk-table tr:last-child td { border-bottom: none; }
+.risk { display: flex; align-items: center; gap: 8px; width: 140px; }
+.risk-bar { flex: 1; height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.risk-fill { height: 100%; }
+.risk-num { font-size: 12px; color: var(--text-muted); min-width: 24px; text-align: right; }
+
+.tier-dist { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; }
+.tier-dist td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tier-dist tr:last-child td { border-bottom: none; }
+.tier-dist .tier-label { width: 140px; }
+.tier-dist .count { width: 50px; color: var(--text-muted); }
+.tier-dist .bar-cell { width: 60%; }
+.tier-dist .pct { width: 50px; text-align: right; color: var(--text-muted); }
+
+.member-intel { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.member-intel th, .member-intel td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.member-intel th { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-subtle); }
+.member-intel tr:last-child td { border-bottom: none; }
+.member-intel .rank { width: 24px; color: var(--text-subtle); }
+.member-intel .name { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+.member-intel .num { text-align: right; }
+.table-scroll { overflow-x: auto; }
+
+.mini { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.mini td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.mini tr:last-child td { border-bottom: none; }
+.mini .pair { color: var(--text); }
+.mini .count { text-align: right; color: var(--text-muted); font-size: 12px; }
 
 code { font-family: 'SF Mono', ui-monospace, Menlo, monospace; font-size: 0.88em; background: var(--surface); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); }
 

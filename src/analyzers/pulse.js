@@ -7,6 +7,7 @@ import { buildContentIdeas } from './content-ideas.js';
 import { buildPersonas } from './personas.js';
 import { buildTopics } from './topics.js';
 import { buildMemberList } from './members.js';
+import { buildNetworkMap } from './network-map.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_WINDOW_DAYS = 42;
@@ -37,6 +38,7 @@ export function buildPulse(parsedMessages, { sinceIso, untilIso } = {}) {
   const personas = buildPersonas(parsedMessages, { sinceIso, untilIso, rosterSize: roster.rosterSize });
   const topics = buildTopics(parsedMessages, { sinceIso, untilIso });
   const memberList = buildMemberList(parsedMessages, { sinceIso, untilIso });
+  const network = buildNetworkMap(parsedMessages, { sinceIso, untilIso });
 
   const previousSinceIso = new Date(new Date(sinceIso).getTime() - DEFAULT_WINDOW_DAYS * DAY_MS).toISOString();
   const prevReal = real.filter(m => m.sentAt >= previousSinceIso && m.sentAt < sinceIso);
@@ -76,6 +78,7 @@ export function buildPulse(parsedMessages, { sinceIso, untilIso } = {}) {
     personas,
     topics,
     memberList: memberList.members.slice(0, 30),
+    network,
   };
 }
 
