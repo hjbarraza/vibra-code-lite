@@ -4,6 +4,33 @@ All notable changes to Vibra Code Lite are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — 2026-04-22
+
+Dashboard redesigned around a considered Ive / Rams / Apple sensibility — cream & ink palette, SF Pro Display for numerals, generous whitespace, content-first cards without heavy chrome. Full dark mode support with toggle and system-preference detection.
+
+### Added
+
+- **Light + dark mode** with automatic system-preference detection (`prefers-color-scheme`) and manual toggle button in the tab bar. Preference persisted in `localStorage`.
+- **Theme button** (◐ / ◑) next to Help and Print.
+- All colors moved to CSS custom properties so the palette switches cleanly.
+
+### Changed
+
+- **Palette** — cream `#f7f3ec` background / pure-white cards / ink-black text (`#14110c`) in light; warm near-black (`#14110c`) background / deep-brown cards (`#1e1b15`) / cream text (`#f1ebdd`) in dark. No blue accents — color comes only from tier pills, horizon markers, and risk bars.
+- **Typography** — SF Pro Display for headings (`font-weight: 300/400`, tighter `letter-spacing`), SF Pro Text for body. Larger `h1` (36px) and metric values (38px). More generous `line-height` (1.6).
+- **Cards** — 10px border-radius, no borders, subtle elevation via shadow instead. 28-32px padding. Pure white in light mode, `--surface` in dark.
+- **Subnavs** get `backdrop-filter: blur(8px)` while sticky.
+- **Modals** — 14px radius, 32/36px padding, stronger blur on backdrop. Cleaner close affordance.
+- **Buttons** — 6px radius, subtle transitions, color flips cleanly with theme.
+- **Drafts, decisions, actions** — now use `--surface-2` background with no borders, internal 6px-radius input-style draft text.
+- **Tier pills** — text color adapts (cream background tiers use `--text` instead of hardcoded black).
+- **Network map** — wrapped in a soft 10px-radius container with `--surface-2` background.
+- **Print** — explicitly resets colors to light palette so PDFs are consistent.
+
+### Git history
+
+- Removed all `Co-Authored-By: Claude` trailers from every commit via `filter-branch`. Reflog purged and force-pushed. H Barraza remains sole author.
+
 ## [0.4.1] — 2026-04-22
 
 ### Removed
