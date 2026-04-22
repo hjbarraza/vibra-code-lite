@@ -43,40 +43,65 @@ You need three things: **Claude Code**, **Node**, and **Vibra**. Takes 5 minutes
 
 ### 1. Install Claude Code
 
-If you don't already have it, follow Anthropic's official guide: https://claude.com/claude-code
+Claude Code is Anthropic's developer tool. It comes in two forms — pick either, plugins work identically in both.
 
-You'll need a Claude account. Claude Code runs in your terminal.
+**Desktop app** (easier if you prefer a graphical interface):
 
-### 2. Check Node (you probably already have it)
+- **macOS:** [download the DMG](https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect)
+- **Windows:** [download the installer](https://claude.com/download)
 
-Claude Code is itself an npm package, so if you installed Claude Code the standard way (`npm install -g @anthropic-ai/claude-code`), you already have Node.
+Open the app, sign in with your Claude account (Pro, Max, Team, Enterprise, or Console — the free claude.ai plan doesn't include Claude Code).
 
-Check: `node --version`. If it prints `v20.x` or higher, skip the rest of this step.
+**Terminal CLI** (for developers / power users):
+
+macOS or Linux:
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+Windows PowerShell:
+```powershell
+irm https://claude.ai/install.ps1 | iex
+```
+
+Or via package manager:
+- Homebrew: `brew install --cask claude-code`
+- WinGet: `winget install Anthropic.ClaudeCode`
+- npm: `npm install -g @anthropic-ai/claude-code`
+
+After installing, run `claude` in a terminal and sign in.
+
+### 2. Check Node 20+
+
+Vibra's scripts run on Node.js 20 or newer. Check with `node --version`. If it prints `v20.x` or higher, skip ahead.
 
 If Node is missing or older:
 
-**macOS:** `brew install node` (you need [Homebrew](https://brew.sh) first)
+- **macOS:** `brew install node` (needs [Homebrew](https://brew.sh))
+- **Windows:** download the installer from https://nodejs.org
+- **Linux:** `sudo apt install nodejs npm` or `nvm install 20`
 
-**Windows:** download the installer from https://nodejs.org
+(If you installed Claude Code via npm, Node is already there.)
 
-**Linux:** `sudo apt install nodejs npm` or `nvm install 20`
+### 3. Install Vibra inside Claude Code
 
-> **Note:** Vibra requires **Claude Code** (the CLI tool that runs in your terminal). The **Claude Desktop** app for Mac/Windows is a different product and doesn't work with plugins. If you only have Claude Desktop, install Claude Code first: https://claude.com/claude-code
-
-### 3. Install Vibra
-
-Easiest path — install from inside Claude Code (recommended):
+Open Claude Code (terminal `claude` command, or the desktop app — both work). Then run these two commands:
 
 ```
 /plugin marketplace add hjbarraza/vibra-plugin
 /plugin install vibra@getvibra
 ```
 
-Two commands. That's it. Claude Code fetches the plugin, verifies it, and makes the `/vibra:*` skills available. Updates later with `/plugin marketplace update getvibra`.
+Run `/reload-plugins` once to activate. That's it.
+
+Update later:
+```
+/plugin marketplace update getvibra
+```
 
 ---
 
-**Alternative — clone + `--plugin-dir`** (useful for local development or if you want to inspect the code first):
+**Alternative — clone + `--plugin-dir`** (for local development or if you want to inspect the code first; terminal CLI only):
 
 ```bash
 cd ~/Code
@@ -84,7 +109,7 @@ git clone https://github.com/hjbarraza/vibra-plugin.git
 claude --plugin-dir /absolute/path/to/vibra-plugin
 ```
 
-No `npm install`, no dependencies to compile. Zero-dep.
+Zero dependencies to compile. No `npm install` needed.
 
 ---
 
