@@ -1,12 +1,21 @@
+import { detectThreads } from './threads.js';
 import { computeRoster } from './roster.js';
+import { buildActionList } from './action-list.js';
+import { buildDigest } from './digest.js';
+import { buildUnanswered } from './unanswered.js';
+import { buildContentIdeas } from './content-ideas.js';
+import { buildPersonas } from './personas.js';
+import { buildTopics } from './topics.js';
+import { buildMemberList } from './members.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_WINDOW_DAYS = 42;
 
 export function buildPulse(parsedMessages, { sinceIso, untilIso } = {}) {
   const real = parsedMessages.filter(m => m.kind === 'message' && !m.wasDeleted);
 
   if (!untilIso) untilIso = real.reduce((m, x) => x.sentAt > m ? x.sentAt : m, '');
-  if (!sinceIso && untilIso) sinceIso = new Date(new Date(untilIso).getTime() - 7 * DAY_MS).toISOString();
+  if (!sinceIso && untilIso) sinceIso = new Date(new Date(untilIso).getTime() - DEFAULT_WINDOW_DAYS * DAY_MS).toISOString();
   if (!sinceIso || !untilIso) throw new Error('No messages in this export.');
 
   const inWindow = real.filter(m => m.sentAt >= sinceIso && m.sentAt <= untilIso);
@@ -21,16 +30,52 @@ export function buildPulse(parsedMessages, { sinceIso, untilIso } = {}) {
   const threadStats = computeThreadStats(inWindow);
   const roster = computeRoster(parsedMessages, { windowStartIso: sinceIso, windowEndIso: untilIso });
 
+  const actionList = buildActionList(parsedMessages, { sinceIso, untilIso });
+  const digest = buildDigest(parsedMessages, { sinceIso, untilIso });
+  const unanswered = buildUnanswered(parsedMessages, { sinceIso, untilIso });
+  const content = buildContentIdeas(parsedMessages, { sinceIso, untilIso });
+  const personas = buildPersonas(parsedMessages, { sinceIso, untilIso, rosterSize: roster.rosterSize });
+  const topics = buildTopics(parsedMessages, { sinceIso, untilIso });
+  const memberList = buildMemberList(parsedMessages, { sinceIso, untilIso });
+
+  const previousSinceIso = new Date(new Date(sinceIso).getTime() - DEFAULT_WINDOW_DAYS * DAY_MS).toISOString();
+  const prevReal = real.filter(m => m.sentAt >= previousSinceIso && m.sentAt < sinceIso);
+  const prevActive = new Set(prevReal.map(m => m.sender).filter(Boolean)).size;
+  const prevRoster = computeRoster(parsedMessages, { windowStartIso: previousSinceIso, windowEndIso: sinceIso });
+
   return {
     sinceIso, untilIso,
+    windowDays: DEFAULT_WINDOW_DAYS,
     totalMessages, distinctMembers,
-    messagesByDay,
-    messagesByHourOfWeek,
-    contributors,
-    gini,
-    responseRate,
-    threadStats,
-    roster,
+    messagesByDay, messagesByHourOfWeek,
+    contributors, gini, responseRate, threadStats, roster,
+    growth: {
+      previousPeriod: {
+        sinceIso: previousSinceIso, untilIso: sinceIso,
+        totalMessages: prevReal.length,
+        distinctMembers: prevActive,
+        rosterSize: prevRoster.rosterSize,
+      },
+    },
+    actions: {
+      silentJoiners: actionList.silentJoiners,
+      longSilentMembers: actionList.longSilentMembers,
+      welcomeGaps: actionList.welcomeGaps,
+      frustrationCandidates: actionList.frustrationCandidates,
+      shoutoutCandidates: actionList.shoutoutCandidates,
+    },
+    openQuestionBundles: unanswered.bundles,
+    topThreads: digest.topThreads,
+    quietMembers: digest.quiet,
+    newMembers: digest.newMembers,
+    content: {
+      links: content.links,
+      quotableCandidates: content.quotableCandidates,
+      mentions: content.mentions,
+    },
+    personas,
+    topics,
+    memberList: memberList.members.slice(0, 30),
   };
 }
 

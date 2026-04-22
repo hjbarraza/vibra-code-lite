@@ -20,20 +20,28 @@ function main() {
   const community = extractCommunityName(messages) ?? '(unnamed)';
 
   const pulse = buildPulse(messages, { sinceIso: isoFromDate(since), untilIso: isoFromDateEnd(until) });
+  pulse.community = community;
   const html = renderPulseHtml(pulse, { community });
 
   const outDir = path.resolve(outputDir);
   mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, `pulse-${slugify(community)}-${pulse.untilIso.slice(0, 10)}.html`);
-  writeFileSync(outPath, html);
+  const base = `pulse-${slugify(community)}-${pulse.untilIso.slice(0, 10)}`;
+  const htmlPath = path.join(outDir, `${base}.html`);
+  const jsonPath = path.join(outDir, `${base}.json`);
+  writeFileSync(htmlPath, html);
+  writeFileSync(jsonPath, JSON.stringify(pulse, null, 2));
 
   console.log(`Community: ${community}`);
-  console.log(`Window: ${pulse.sinceIso.slice(0, 10)} → ${pulse.untilIso.slice(0, 10)}`);
+  console.log(`Window: ${pulse.sinceIso.slice(0, 10)} → ${pulse.untilIso.slice(0, 10)} (${pulse.windowDays} days)`);
   console.log(`${pulse.totalMessages} messages, ${pulse.distinctMembers} active members, ${pulse.threadStats.count} threads.`);
-  console.log(`Roster: ${pulse.roster.activeInWindow}/${pulse.roster.rosterSize} active this window, ${pulse.roster.neverPosted} never posted${pulse.roster.rosterIsLowerBound ? ' (lower bound)' : ''}.`);
+  console.log(`Roster: ${pulse.roster.activeInWindow}/${pulse.roster.rosterSize} active, ${pulse.roster.neverPosted} never posted${pulse.roster.rosterIsLowerBound ? ' (lower bound)' : ''}.`);
   const rate = pulse.responseRate.rate;
   console.log(`Response rate: ${rate == null ? '—' : Math.round(rate * 100) + '%'} (${pulse.responseRate.answered}/${pulse.responseRate.questions}).`);
-  console.log(`Pulse dashboard: ${outPath}`);
+  console.log('');
+  console.log(`Dashboard HTML: ${htmlPath}`);
+  console.log(`Dashboard data: ${jsonPath}`);
+  console.log('');
+  console.log('Next: open the HTML in a browser, or read the JSON to synthesize Business-tab insights (persona narrative, topic themes, JTBD, recommendations) and Edit them into the HTML.');
 }
 
 main();

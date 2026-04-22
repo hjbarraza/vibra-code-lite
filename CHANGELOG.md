@@ -4,6 +4,24 @@ All notable changes to Vibra are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.0] — 2026-04-22
+
+### Changed
+
+- **`/vibra:pulse` is now the unified community dashboard**, replacing the old health-snapshot. One HTML artifact with two tabs:
+  - **For the Community Manager** — action queue, open questions, top threads, content to amplify, membership flow. Fully deterministic; rendered from data.
+  - **For the Business** — community vitals, growth vs prior period, activity charts, member personas, topic signal, jobs-to-be-done, strategic observations. Mix of deterministic (tables, metrics, token frequencies) + agent-synthesized (persona narratives, topic themes, JTBD, recommendations).
+- **Default window widened to 6 weeks** (42 days) — enough horizon for meaningful trend + persona + topic analysis.
+- **Per-tab print-to-PDF** — `window.print()` only prints the currently active tab, so you get two separate PDFs (CM report, Business report) instead of one combined document.
+
+### Added
+
+- `src/analyzers/personas.js` — heuristic clustering of members by behavior (helper, asker, connector, content-sharer, regular, newcomer, observer) + lurker count from roster.
+- `src/analyzers/topics.js` — keyword-frequency extraction with stopword filtering (EN + ES), producing top tokens with distinct-member counts and sample messages per topic.
+- `src/analyzers/pulse.js` rewritten as an aggregator — pulls from every other analyzer plus growth comparison to the prior 42-day window.
+- `src/renderers/pulse-html.js` rewritten with tabbed UI, minimal JS (~15 lines), Rams aesthetic preserved.
+- Skill prompt updated with detailed guidance on how the agent should synthesize each of the four Business-tab placeholders.
+
 ## [0.0.4] — 2026-04-22
 
 ### Added
