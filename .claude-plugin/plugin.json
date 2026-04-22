@@ -6,6 +6,8 @@
     "name": "YUNO"
   },
   "license": "MIT",
+  "homepage": "https://github.com/hjbarraza/vibra-plugin",
+  "repository": "https://github.com/hjbarraza/vibra-plugin",
   "keywords": [
     "whatsapp",
     "community",

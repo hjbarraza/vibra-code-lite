@@ -26,7 +26,7 @@ Everything runs locally. No external API keys. Your community data stays on your
 
 ```bash
 # Clone (or download) the plugin somewhere on your machine
-git clone <repo-url> vibra-plugin
+git clone https://github.com/hjbarraza/vibra-plugin.git
 
 # Enable it for a Claude Code session (any working directory)
 claude --plugin-dir /absolute/path/to/vibra-plugin
